@@ -16,8 +16,8 @@ Atomist Skill to run NPM scripts
 
 Connect and configure this integration:
 
-- **GitHub**
-- **Slack**
+-   **GitHub**
+-   **Slack**
 
 The **GitHub** integration must be configured in order to use this skill. At least one repository must be selected.
 We recommand that you configure the **Slack** integration.

@@ -117,10 +117,7 @@ const NodeVersionStep: NpmStep = {
 };
 
 function gitBranchToNpmVersion(branchName: string): string {
-    return branchName
-        .replace(/\//g, "-")
-        .replace(/_/g, "-")
-        .replace(/@/g, "");
+    return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
 }
 
 function formatDate(date = new Date(), format = "yyyymmddHHMMss", utc = true) {
