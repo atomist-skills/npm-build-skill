@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-import { parameter, ParameterType, resourceProvider, skill } from "@atomist/skill";
+import { Category, parameter, ParameterType, resourceProvider, skill } from "@atomist/skill";
 import { Configuration } from "./lib/configuration";
 
 export const Skill = skill<Configuration & { repos: any }>({
     name: "npm-skill",
     namespace: "atomist",
-    displayName: "NPM",
-    author: "atomist-skills",
-    categories: [],
+    displayName: "NPM Scripts",
+    author: "Atomist",
+    categories: [Category.DevEx],
     license: "Apache-2.0",
     homepageUrl: "https://github.com/atomist-skills/npm-skill",
     repositoryUrl: "https://github.com/atomist-skills/npm-skill.git",
     iconUrl: "file://docs/images/icon.svg",
-
-    runtime: {
-        memory: 2048,
-        timeout: 540,
-    },
 
     resourceProviders: {
         github: resourceProvider.gitHub({ minRequired: 1 }),
@@ -39,23 +34,26 @@ export const Skill = skill<Configuration & { repos: any }>({
     },
 
     parameters: {
-        world: {
+        version: {
             type: ParameterType.String,
-            displayName: "World",
-            description: "",
+            displayName: "Node.js version",
+            description: "Version of Node.js to install (should be valid nvm alias or version)",
+            required: false,
+        },
+        scripts: {
+            type: ParameterType.StringArray,
+            displayName: "NPM scripts",
+            description: "Provide name of NPM scripts to run in order",
+            required: true,
+        },
+        docker_cache: {
+            type: ParameterType.StringArray,
+            displayName: "Cache files or folders",
+            description: "Cache and restore file system content between executions of this skill",
             required: false,
         },
         repos: parameter.repoFilter(),
     },
-
-    commands: [
-        {
-            name: "helloWorld",
-            displayName: "HelloWorld",
-            pattern: /^hello world$/,
-            description: "Simple hello world command",
-        },
-    ],
 
     subscriptions: ["file://graphql/subscription/*.graphql"],
 });

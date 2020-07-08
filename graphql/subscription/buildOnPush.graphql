@@ -1,0 +1,27 @@
+subscription buildOnPush {
+  Push {
+    repo {
+      url
+      owner
+      name
+      org {
+        provider {
+          apiUrl
+          gitUrl
+        }
+      }
+      channels {
+        name
+        team {
+          id
+        }
+      }
+    }
+    branch
+    after {
+      timestamp
+      sha
+      url
+    }
+  }
+}

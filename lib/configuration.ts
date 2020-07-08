@@ -15,5 +15,7 @@
  */
 
 export interface Configuration {
-    world: string;
+    version: string;
+    scripts: string[];
+    docker_cache: string[];
 }

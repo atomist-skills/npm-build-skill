@@ -1,7 +1,9 @@
 {
   "main": "node_modules/@atomist/skill/lib/function.js",
   "dependencies": {
-    "@atomist/skill": "0.1.0-master.20200702145252"
+    "@atomist/skill": "0.1.0-master.20200702145252",
+    "@types/dateformat": "^3.0.1",
+    "dateformat": "^3.0.3"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.6.0",
@@ -48,7 +50,7 @@
     "start": "functions-framework --target=entryPoint --signature-type=event",
     "test": "mocha --require espower-typescript/guess \"test/**/*.test.ts\" --reporter min",
     "test:one": "mocha --require espower-typescript/guess \"test/**/${TEST:-*.test.ts}\"",
-    "skill": "run-s compile test skill:generate skill:bundle skill:package",
+    "skill": "run-s compile test skill:generate",
     "skill:generate": "atm-skill generate",
     "skill:clean": "atm-skill clean",
     "skill:bundle": "atm-skill bundle --minify --source-map",
