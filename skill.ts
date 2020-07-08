@@ -33,6 +33,12 @@ export const Skill = skill<Configuration & { repos: any }>({
         chat: resourceProvider.chat({ minRequired: 0 }),
     },
 
+    containers: {
+        npm: {
+            image: "gcr.io/atomist-container-skills/npm-skill",
+        },
+    },
+
     parameters: {
         version: {
             type: ParameterType.String,
