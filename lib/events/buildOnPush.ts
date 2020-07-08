@@ -19,11 +19,13 @@ import * as df from "dateformat";
 import * as fs from "fs-extra";
 import { Configuration } from "../configuration";
 import { BuildOnPushSubscription } from "../typings/types";
+import * as path from "path";
 
 interface NpmParameters {
     project: project.Project;
     version: string;
     check: github.Check;
+    path: string;
 }
 
 type NpmStep = Step<EventContext<BuildOnPushSubscription, Configuration>, NpmParameters>;
@@ -77,7 +79,20 @@ const SetupNodeStep: NpmStep = {
     run: async (ctx, params) => {
         const cfg = ctx.configuration?.[0]?.parameters;
         // Set up node version
-        const result = await params.project.spawn("nvm", ["install", cfg.version]);
+        let result = await params.project.spawn("bash", [
+            "-c",
+            `source $HOME/.nvm/nvm.sh && nvm install ${cfg.version}`,
+        ]);
+        if (result.status !== 0) {
+            return {
+                code: result.status,
+            };
+        }
+        const lines = [];
+        result = await params.project.spawn("bash", ["-c", `source $HOME/.nvm/nvm.sh && nvm which ${cfg.version}`], {
+            log: { write: msg => lines.push(msg) },
+        });
+        params.path = path.dirname(lines.join("\n").trim());
         return {
             code: result.status,
         };
@@ -93,12 +108,14 @@ const NodeVersionStep: NpmStep = {
 
         let pjVersion = pj.version;
         if (!pjVersion || pjVersion.length === 0) {
-            pjVersion = "0.0.1";
+            pjVersion = "0.1.0";
         }
 
         const version = `${pjVersion}-${gitBranchToNpmVersion(branchSuffix)}${formatDate()}`;
         params.version = version;
-        const result = await params.project.spawn("npm", ["version", "--no-git-tag-version", version]);
+        const result = await params.project.spawn("npm", ["version", "--no-git-tag-version", version], {
+            env: { ...process.env, PATH: `${params.path}:${process.env}` },
+        });
         return {
             code: result.status,
         };
@@ -117,7 +134,7 @@ function formatDate(date = new Date(), format = "yyyymmddHHMMss", utc = true) {
 const NpmInstallStep: NpmStep = {
     name: "npm install",
     run: async (ctx, params) => {
-        const opts = { env: { ...process.env, NODE_ENV: "development" } };
+        const opts = { env: { ...process.env, NODE_ENV: "development", PATH: `${params.path}:${process.env}` } };
         let result;
         if (await fs.pathExists(params.project.path("package-lock.json"))) {
             result = await params.project.spawn("npm", ["ci"], opts);
@@ -138,7 +155,9 @@ const NodeScriptsStep: NpmStep = {
         const scripts = cfg.scripts;
         // Run scripts
         for (const script of scripts) {
-            const result = await params.project.spawn("npm", ["run", "--if-present", script]);
+            const result = await params.project.spawn("npm", ["run", "--if-present", script], {
+                env: { ...process.env, PATH: `${params.path}:${process.env}` },
+            });
             if (result.status !== 0) {
                 return {
                     code: result.status,

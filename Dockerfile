@@ -30,7 +30,8 @@ RUN bash -c "source $HOME/.nvm/nvm.sh \
     && nvm install 10 \
     && nvm install 12 \
     && nvm install 14 \
-    && nvm use --lts"
+    && nvm use --lts \
+    && nvm alias default node"
 
 WORKDIR "/skill"
 
