@@ -91,6 +91,7 @@ const SetupNodeStep: NpmStep = {
         const lines = [];
         result = await params.project.spawn("bash", ["-c", `source $HOME/.nvm/nvm.sh && nvm which ${cfg.version}`], {
             log: { write: msg => lines.push(msg) },
+            logCommand: false,
         });
         params.path = path.dirname(lines.join("\n").trim());
         log.debug(`Node and NPM path set to: ${params.path}`);
