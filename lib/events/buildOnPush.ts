@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { EventContext, EventHandler, github, project, repository, runSteps, secret, Step } from "@atomist/skill";
+import { EventContext, EventHandler, github, project, repository, runSteps, secret, Step, log } from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
 import { Configuration } from "../configuration";
@@ -93,6 +93,7 @@ const SetupNodeStep: NpmStep = {
             log: { write: msg => lines.push(msg) },
         });
         params.path = path.dirname(lines.join("\n").trim());
+        log.debug(`Node and NPM path set to: ${params.path}`);
         return {
             code: result.status,
         };
@@ -114,7 +115,7 @@ const NodeVersionStep: NpmStep = {
         const version = `${pjVersion}-${gitBranchToNpmVersion(branchSuffix)}${formatDate()}`;
         params.version = version;
         const result = await params.project.spawn("npm", ["version", "--no-git-tag-version", version], {
-            env: { ...process.env, PATH: `${params.path}:${process.env}` },
+            env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
         });
         return {
             code: result.status,
@@ -134,7 +135,7 @@ function formatDate(date = new Date(), format = "yyyymmddHHMMss", utc = true) {
 const NpmInstallStep: NpmStep = {
     name: "npm install",
     run: async (ctx, params) => {
-        const opts = { env: { ...process.env, NODE_ENV: "development", PATH: `${params.path}:${process.env}` } };
+        const opts = { env: { ...process.env, NODE_ENV: "development", PATH: `${params.path}:${process.env.PATH}` } };
         let result;
         if (await fs.pathExists(params.project.path("package-lock.json"))) {
             result = await params.project.spawn("npm", ["ci"], opts);
@@ -156,7 +157,7 @@ const NodeScriptsStep: NpmStep = {
         // Run scripts
         for (const script of scripts) {
             const result = await params.project.spawn("npm", ["run", "--if-present", script], {
-                env: { ...process.env, PATH: `${params.path}:${process.env}` },
+                env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
             });
             if (result.status !== 0) {
                 return {
