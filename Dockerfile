@@ -43,5 +43,4 @@ COPY --from=build /usr/src/ .
 
 WORKDIR "/atm/home"
 
-ENTRYPOINT ["node", "--no-deprecation", "--trace-warnings", "--expose_gc", "--optimize_for_size", "--always_compact", "--max_old_space_size=512", "/skill/node_modules/.bin/atm-skill"]
-CMD ["run"]
+ENTRYPOINT ["bash", "-c", "source $HOME/.nvm/nvm.sh && node --no-deprecation --trace-warnings --expose_gc --optimize_for_size --always_compact --max_old_space_size=512 /skill/node_modules/.bin/atm-skill run"]
