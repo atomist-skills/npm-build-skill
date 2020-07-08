@@ -14,22 +14,11 @@
  * limitations under the License.
  */
 
-import {
-    EventContext,
-    EventHandler,
-    Step,
-    secret,
-    repository,
-    project,
-    runSteps,
-    StepListener,
-    HandlerStatus,
-    github,
-} from "@atomist/skill";
+import { EventContext, EventHandler, github, project, repository, runSteps, secret, Step } from "@atomist/skill";
+import * as df from "dateformat";
+import * as fs from "fs-extra";
 import { Configuration } from "../configuration";
 import { BuildOnPushSubscription } from "../typings/types";
-import * as fs from "fs-extra";
-import * as df from "dateformat";
 
 interface NpmParameters {
     project: project.Project;
@@ -117,6 +106,7 @@ const NodeVersionStep: NpmStep = {
 };
 
 function gitBranchToNpmVersion(branchName: string): string {
+    // prettier-ignore
     return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
 }
 
@@ -165,6 +155,5 @@ export const handler: EventHandler<BuildOnPushSubscription, Configuration> = asy
     return runSteps({
         context: ctx,
         steps: [LoadProjectStep, ValidateStep, SetupNodeStep, NodeVersionStep, NpmInstallStep, NodeScriptsStep],
-        listeners: [checkListener],
     });
 };
