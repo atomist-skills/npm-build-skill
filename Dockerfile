@@ -1,3 +1,14 @@
+# Set up build
+FROM node:lts AS build
+
+WORKDIR /usr/src
+
+COPY . ./
+
+RUN npm ci --no-optional && \
+    npm run compile && \
+    rm -rf node_modules .git
+
 FROM ubuntu:focal
 
 # tools
@@ -28,7 +39,7 @@ RUN bash -c "source $HOME/.nvm/nvm.sh \
     && npm ci --no-optional \
     && npm cache clean --force"
 
-COPY . ./
+COPY --from=build /usr/src/ .
 
 WORKDIR "/atm/home"
 
