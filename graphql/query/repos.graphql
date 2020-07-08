@@ -1,0 +1,6 @@
+query Repositories {
+    Repo {
+        name
+        owner
+    }
+}
