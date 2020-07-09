@@ -265,7 +265,9 @@ const NpmScriptsStep: NpmStep = {
                 const home = process.env.ATOMIST_HOME || "/atm/home";
                 await params.check.update({
                     conclusion: "failure",
-                    body: `${body.join("\n\n---\n\n")}Running \`npm run --if-present ${script}\` errored:
+                    body: `${
+                        body.length > 0 ? `${body.join("\n\n---\n\n")}\n\n---\n\n` : ""
+                    }Running \`npm run --if-present ${script}\` errored:
 
 \`\`\`
 ${lines.join("")}
@@ -288,6 +290,10 @@ ${lines.join("")}
                 };
             } else {
                 body.push(`Running \`npm run --if-present ${script}\` completed successfully`);
+                await params.check.update({
+                    conclusion: undefined,
+                    body: body.join("\n\n---\n\n"),
+                });
             }
         }
         await params.check.update({
