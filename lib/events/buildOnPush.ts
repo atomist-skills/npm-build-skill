@@ -17,6 +17,7 @@
 import { EventContext, EventHandler, github, project, repository, runSteps, secret, Step, log } from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
+import * as os from "os";
 import { Configuration } from "../configuration";
 import { BuildOnPushSubscription } from "../typings/types";
 import * as path from "path";
@@ -67,6 +68,45 @@ const ValidateStep: NpmStep = {
                 reason: `Ignoring push to non-NPM project`,
             };
         }
+        return {
+            visibility: "hidden",
+            code: 0,
+        };
+    },
+};
+
+const PrepareStep: NpmStep = {
+    name: "prepare",
+    run: async (ctx, params) => {
+        // copy matcher
+        const matcher = {
+            name: "npm",
+            severity: "error",
+            report: "always",
+            pattern: [
+                // TypeScript compile output
+                {
+                    regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+                    groups: {
+                        path: 1,
+                        line: 2,
+                        column: 3,
+                        severity: 4,
+                        title: 5,
+                        message: 6,
+                    },
+                },
+            ],
+        };
+        await fs.writeJson(process.env.ATOMIST_MATCHERS_DIR, matcher);
+
+        // copy creds
+        if (process.env.NPM_NPMJS_CREDENTIALS) {
+            const npmRc = path.join(os.homedir(), ".npmrc");
+            log.debug(`Provisioning NPM credentials to '${npmRc}'`);
+            await fs.copyFile(process.env.NPM_NPMJS_CREDENTIALS, npmRc);
+        }
+
         return {
             visibility: "hidden",
             code: 0,
@@ -175,6 +215,14 @@ const NodeScriptsStep: NpmStep = {
 export const handler: EventHandler<BuildOnPushSubscription, Configuration> = async ctx => {
     return runSteps({
         context: ctx,
-        steps: [LoadProjectStep, ValidateStep, SetupNodeStep, NodeVersionStep, NpmInstallStep, NodeScriptsStep],
+        steps: [
+            LoadProjectStep,
+            ValidateStep,
+            PrepareStep,
+            SetupNodeStep,
+            NodeVersionStep,
+            NpmInstallStep,
+            NodeScriptsStep,
+        ],
     });
 };

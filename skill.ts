@@ -31,6 +31,13 @@ export const Skill = skill<Configuration & { repos: any }>({
     resourceProviders: {
         github: resourceProvider.gitHub({ minRequired: 1 }),
         chat: resourceProvider.chat({ minRequired: 0 }),
+        npmjs: {
+            displayName: "npmjs registry",
+            description: "",
+            typeName: "NpmJSRegistryProvider",
+            minRequired: 0,
+            maxAllowed: 1,
+        },
     },
 
     containers: {
