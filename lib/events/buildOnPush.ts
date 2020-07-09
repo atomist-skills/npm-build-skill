@@ -14,18 +14,7 @@
  * limitations under the License.
  */
 
-import {
-    EventContext,
-    EventHandler,
-    github,
-    log,
-    project,
-    repository,
-    runSteps,
-    secret,
-    Step,
-    childProcess,
-} from "@atomist/skill";
+import { EventContext, EventHandler, github, log, project, repository, runSteps, secret, Step } from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
 import * as os from "os";
@@ -269,7 +258,7 @@ const NpmScriptsStep: NpmStep = {
                 log: {
                     write: msg => {
                         lines.push(msg);
-                        childProcess.ConsoleLog.write(msg);
+                        DebugLog.write(msg);
                     },
                 },
                 logCommand: false,
@@ -280,7 +269,7 @@ const NpmScriptsStep: NpmStep = {
                     body: `Running \`npm run --if-present ${script}\` errored:
 
 \`\`\`
-${lines.join("\n")}
+${lines.join("")}
 \`\`\``,
                 });
                 return {
@@ -333,7 +322,7 @@ const NpmPublishStep: NpmStep = {
             log: {
                 write: msg => {
                     lines.push(msg);
-                    childProcess.ConsoleLog.write(msg);
+                    DebugLog.write(msg);
                 },
             },
             logCommand: false,
@@ -343,7 +332,7 @@ const NpmPublishStep: NpmStep = {
                 conclusion: "failure",
                 body: `Running \`npm publish ${args.join("")}\` errored:
 \`\`\`
-${lines.join("\n")}
+${lines.join("")}
 \`\`\``,
             });
             return {
@@ -357,7 +346,7 @@ ${lines.join("\n")}
             conclusion: "success",
             body: `Running \`npm publish ${args.join("")}\` completed successfully:
 \`\`\`
-${lines.join("\n")}
+${lines.join("")}
 \`\`\``,
         });
         return {
@@ -397,4 +386,15 @@ export const handler: EventHandler<BuildOnPushSubscription, Configuration> = asy
             GitTagStep,
         ],
     });
+};
+
+const DebugLog = {
+    write: (msg): void => {
+        let line = msg;
+        if (line.endsWith("\n")) {
+            line = line.slice(0, -1);
+        }
+        const lines = line.split("\n");
+        lines.forEach(l => log.debug(l.trimRight()));
+    },
 };
