@@ -332,7 +332,8 @@ export interface Annotation {
     message: string;
 }
 
-function extractAnnotations(logs: string[]): Annotation[] {
+function extractAnnotations(lines: string[]): Annotation[] {
+    const logs = lines.join("").split("\n");
     const annotations = [];
     for (const matcher of Matchers) {
         for (const pattern of matcher.pattern) {
