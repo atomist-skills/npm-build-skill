@@ -77,7 +77,7 @@ const ValidateStep: NpmStep = {
 
 const PrepareStep: NpmStep = {
     name: "prepare",
-    run: async (ctx, params) => {
+    run: async () => {
         // copy matcher
         const matcher = {
             name: "npm",
