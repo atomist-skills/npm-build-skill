@@ -29,9 +29,21 @@ const Matchers = [
         severity: "error",
         report: "always",
         pattern: [
-            // TypeScript compile output
+            // TypeScript < 3.9 compile output
             {
                 regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+                groups: {
+                    path: 1,
+                    line: 2,
+                    column: 3,
+                    severity: 4,
+                    title: 5,
+                    message: 6,
+                },
+            },
+            // TypeScript 3.9 compile output
+            {
+                regexp: "^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
                 groups: {
                     path: 1,
                     line: 2,
