@@ -53,7 +53,6 @@ const LoadProjectStep: NpmStep = {
         params.project = project;
 
         return {
-            visibility: "hidden",
             code: 0,
         };
     },
@@ -70,7 +69,6 @@ const ValidateStep: NpmStep = {
             };
         }
         return {
-            visibility: "hidden",
             code: 0,
         };
     },
@@ -117,7 +115,6 @@ const PrepareStep: NpmStep = {
         });
 
         return {
-            visibility: "hidden",
             code: 0,
         };
     },
