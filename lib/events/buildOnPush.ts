@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { EventContext, EventHandler, github, project, repository, runSteps, secret, Step, log } from "@atomist/skill";
+import { EventContext, EventHandler, github, log, project, repository, runSteps, secret, Step } from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
 import * as os from "os";
+import * as path from "path";
 import { Configuration } from "../configuration";
 import { BuildOnPushSubscription } from "../typings/types";
-import * as path from "path";
 
 interface NpmParameters {
     project: project.Project;
