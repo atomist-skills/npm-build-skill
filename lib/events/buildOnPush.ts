@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
-import { EventContext, EventHandler, github, log, project, repository, runSteps, secret, Step } from "@atomist/skill";
+import {
+    EventContext,
+    EventHandler,
+    github,
+    log,
+    project,
+    repository,
+    runSteps,
+    secret,
+    Step,
+    childProcess,
+} from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
 import * as os from "os";
@@ -78,27 +89,27 @@ const ValidateStep: NpmStep = {
 
 const PrepareStep: NpmStep = {
     name: "prepare",
-    run: async () => {
+    run: async (ctx, params) => {
         // copy matcher
-        const matcher = {
-            name: "npm",
-            severity: "error",
-            report: "always",
-            pattern: [
-                // TypeScript compile output
-                {
-                    regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
-                    groups: {
-                        path: 1,
-                        line: 2,
-                        column: 3,
-                        severity: 4,
-                        title: 5,
-                        message: 6,
-                    },
-                },
-            ],
-        };
+        // const matcher = {
+        //     name: "npm",
+        //     severity: "error",
+        //     report: "always",
+        //     pattern: [
+        //         // TypeScript compile output
+        //         {
+        //             regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+        //             groups: {
+        //                 path: 1,
+        //                 line: 2,
+        //                 column: 3,
+        //                 severity: 4,
+        //                 title: 5,
+        //                 message: 6,
+        //             },
+        //         },
+        //     ],
+        // };
         // await fs.writeJson(path.join(process.env.ATOMIST_MATCHERS_DIR, "npm.matcher.json"), matcher);
 
         // copy creds
@@ -107,6 +118,14 @@ const PrepareStep: NpmStep = {
             log.debug(`Provisioning NPM credentials to '${npmRc}'`);
             await fs.copyFile(process.env.NPM_NPMJS_CREDENTIALS, npmRc);
         }
+
+        // raise the check
+        params.check = await github.openCheck(ctx, params.project.id, {
+            sha: ctx.data.Push[0].after.sha,
+            title: "npm",
+            name: `${ctx.skill.name}/run`,
+            body: `Running \`npm run ${ctx.configuration?.[0]?.parameters?.scripts.join(" ")}\``,
+        });
 
         return {
             visibility: "hidden",
@@ -126,8 +145,16 @@ const SetupNodeStep: NpmStep = {
             `source $HOME/.nvm/nvm.sh && nvm install ${cfg.version}`,
         ]);
         if (result.status !== 0) {
+            await params.check.update({
+                conclusion: "failure",
+                body: "`nvm install` failed",
+            });
             return {
                 code: result.status,
+                reason: `\`nvm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
+                    0,
+                    7,
+                )}](${push.after.url})`,
             };
         }
         // set the unsafe-prem config
@@ -141,12 +168,15 @@ const SetupNodeStep: NpmStep = {
         params.path = path.dirname(lines.join("\n").trim());
         log.debug(`Node and NPM path set to: ${params.path}`);
         if (result.status !== 0) {
+            await params.check.update({
+                conclusion: "failure",
+                body: "`nvm which` failed",
+            });
             return {
                 code: result.status,
-                reason: `\`nvm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
-                    0,
-                    7,
-                )}](${push.after.url})`,
+                reason: `\`nvm which\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+                    push.after.url
+                })`,
             };
         }
         return undefined;
@@ -172,6 +202,10 @@ const NodeVersionStep: NpmStep = {
             env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
         });
         if (result.status !== 0) {
+            await params.check.update({
+                conclusion: "failure",
+                body: "`npm version` failed",
+            });
             return {
                 code: result.status,
                 reason: `\`npm version\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
@@ -205,6 +239,10 @@ const NpmInstallStep: NpmStep = {
             result = await params.project.spawn("npm", ["install", `--cache=${params.project.path(".npm")}`], opts);
         }
         if (result.status !== 0) {
+            await params.check.update({
+                conclusion: "failure",
+                body: "`npm install` failed",
+            });
             return {
                 code: result.status,
                 reason: `\`npm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
@@ -225,10 +263,26 @@ const NpmScriptsStep: NpmStep = {
         const scripts = cfg.scripts;
         // Run scripts
         for (const script of scripts) {
+            const lines = [];
             const result = await params.project.spawn("npm", ["run", "--if-present", script], {
                 env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+                log: {
+                    write: msg => {
+                        lines.push(msg);
+                        childProcess.ConsoleLog.write(msg);
+                    },
+                },
+                logCommand: false,
             });
             if (result.status !== 0) {
+                await params.check.update({
+                    conclusion: "failure",
+                    body: `Running \`npm run --if-present ${script}\` errored:
+
+\`\`\`
+${lines.join("\n")}
+\`\`\``,
+                });
                 return {
                     code: result.status,
                     reason: `\`npm run ${script}\` failed on [${push.repo.owner}/${
@@ -237,6 +291,9 @@ const NpmScriptsStep: NpmStep = {
                 };
             }
         }
+        await params.check.update({
+            conclusion: "success",
+        });
         return {
             code: 0,
             reason: `\`npm run ${scripts.join(" ")}\` passed on [${push.repo.owner}/${
@@ -252,8 +309,8 @@ const NpmPublishStep: NpmStep = {
     run: async (ctx, params) => {
         const cfg = ctx.configuration?.[0]?.parameters;
         const push = ctx.data.Push[0];
-        const args = [];
 
+        const args = [];
         if (cfg.access) {
             args.push("--access", cfg.access);
         }
@@ -263,10 +320,32 @@ const NpmPublishStep: NpmStep = {
             args.push("--tag", gitBranchToNpmTag(push.branch));
         }
 
+        const check = await github.openCheck(ctx, params.project.id, {
+            sha: ctx.data.Push[0].after.sha,
+            title: "npm publish",
+            name: `${ctx.skill.name}/publish`,
+            body: `Running \`npm publish ${args.join("")}\``,
+        });
+
+        const lines = [];
         const result = await params.project.spawn("npm", ["publish", ...args], {
             env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+            log: {
+                write: msg => {
+                    lines.push(msg);
+                    childProcess.ConsoleLog.write(msg);
+                },
+            },
+            logCommand: false,
         });
         if (result.status !== 0) {
+            await check.update({
+                conclusion: "failure",
+                body: `Running \`npm publish ${args.join("")}\` errored:
+\`\`\`
+${lines.join("\n")}
+\`\`\``,
+            });
             return {
                 code: result.status,
                 reason: `\`npm publish ${args.join(" ")}\` failed on [${push.repo.owner}/${
@@ -274,7 +353,13 @@ const NpmPublishStep: NpmStep = {
                 }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
             };
         }
-
+        await check.update({
+            conclusion: "success",
+            body: `Running \`npm publish ${args.join("")}\` completed successfully:
+\`\`\`
+${lines.join("\n")}
+\`\`\``,
+        });
         return {
             code: 0,
             reason: `\`npm publish ${args.join(" ")}\` passed on [${push.repo.owner}/${
