@@ -122,8 +122,8 @@ const PrepareStep: NpmStep = {
         // raise the check
         params.check = await github.openCheck(ctx, params.project.id, {
             sha: ctx.data.Push[0].after.sha,
-            title: "npm",
-            name: `${ctx.skill.name}/run`,
+            title: "npm run",
+            name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/run`,
             body: `Running \`npm run ${ctx.configuration?.[0]?.parameters?.scripts.join(" ")}\``,
         });
 
@@ -323,7 +323,7 @@ const NpmPublishStep: NpmStep = {
         const check = await github.openCheck(ctx, params.project.id, {
             sha: ctx.data.Push[0].after.sha,
             title: "npm publish",
-            name: `${ctx.skill.name}/publish`,
+            name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/publish`,
             body: `Running \`npm publish ${args.join("")}\``,
         });
 
