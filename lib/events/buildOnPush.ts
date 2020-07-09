@@ -285,7 +285,7 @@ const NpmScriptsStep: NpmStep = {
 ${lines.join("").trim()}
 \`\`\``,
                     annotations: annotations.map(r => ({
-                        annotationLevel: mapSeverity(r.severity),
+                        annotationLevel: r.severity,
                         path: r.path.replace(home + "/", ""),
                         startLine: r.line ? +r.line : undefined,
                         endLine: r.line ? +r.line : undefined,
@@ -310,9 +310,7 @@ ${lines.join("").trim()}
         }
         await params.check.update({
             conclusion: "success",
-            body: `Running \`npm run --if-present ${ctx.configuration?.[0]?.parameters?.scripts.join(
-                " ",
-            )}\` completed successfully`,
+            body: body.join("\n\n---\n\n"),
         });
         return {
             code: 0,
