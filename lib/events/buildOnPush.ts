@@ -329,7 +329,7 @@ const NpmPublishStep: NpmStep = {
         if (result.status !== 0) {
             await check.update({
                 conclusion: "failure",
-                body: `Running \`npm publish ${args.join("")}\` errored:
+                body: `Running \`npm publish ${args.join(" ")}\` errored:
 \`\`\`
 ${lines.join("")}
 \`\`\``,
@@ -343,7 +343,7 @@ ${lines.join("")}
         }
         await check.update({
             conclusion: "success",
-            body: `Running \`npm publish ${args.join("")}\` completed successfully:
+            body: `Running \`npm publish ${args.join(" ")}\` completed successfully:
 \`\`\`
 ${lines.join("")}
 \`\`\``,
