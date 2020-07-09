@@ -21,6 +21,7 @@ import * as os from "os";
 import * as path from "path";
 import { Configuration } from "../configuration";
 import { BuildOnPushSubscription } from "../typings/types";
+import * as _ from "lodash";
 
 interface NpmParameters {
     project: project.Project;
@@ -213,7 +214,7 @@ const NpmInstallStep: NpmStep = {
     },
 };
 
-const NodeScriptsStep: NpmStep = {
+const NpmScriptsStep: NpmStep = {
     name: "npm run",
     run: async (ctx, params) => {
         const push = ctx.data.Push[0];
@@ -242,6 +243,48 @@ const NodeScriptsStep: NpmStep = {
     },
 };
 
+const NpmPublishStep: NpmStep = {
+    name: "npm publish",
+    runWhen: async ctx => ctx.configuration?.[0]?.parameters.publish,
+    run: async (ctx, params) => {
+        const cfg = ctx.configuration?.[0]?.parameters;
+        const push = ctx.data.Push[0];
+        const args = [];
+
+        if (cfg.access) {
+            args.push("--access", cfg.access);
+        }
+        if (cfg.tag) {
+            args.push(..._.flatten(cfg.tag.map(t => ["--tag", t])));
+        } else {
+            args.push("--tag", gitBranchToNpmTag(push.branch));
+        }
+
+        const result = await params.project.spawn("npm", ["publish", ...args], {
+            env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+        });
+        if (result.status !== 0) {
+            return {
+                code: result.status,
+                reason: `\`npm publish ${args.join(" ")}\` failed on [${push.repo.owner}/${
+                    push.repo.name
+                }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+            };
+        }
+
+        return {
+            code: 0,
+            reason: `\`npm publish ${args.join(" ")}\` passed on [${push.repo.owner}/${
+                push.repo.name
+            }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+        };
+    },
+};
+
+function gitBranchToNpmTag(branchName: string): string {
+    return `branch-${gitBranchToNpmVersion(branchName)}`;
+}
+
 const GitTagStep: NpmStep = {
     name: "git tag",
     run: async (ctx, params) => {
@@ -261,7 +304,8 @@ export const handler: EventHandler<BuildOnPushSubscription, Configuration> = asy
             SetupNodeStep,
             NodeVersionStep,
             NpmInstallStep,
-            NodeScriptsStep,
+            NpmScriptsStep,
+            NpmPublishStep,
             GitTagStep,
         ],
     });

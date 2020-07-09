@@ -20,7 +20,7 @@ import { Configuration } from "./lib/configuration";
 export const Skill = skill<Configuration & { repos: any }>({
     name: "npm-skill",
     namespace: "atomist",
-    displayName: "NPM Scripts",
+    displayName: "npm Scripts",
     author: "Atomist",
     categories: [Category.DevEx],
     license: "Apache-2.0",
@@ -55,9 +55,38 @@ export const Skill = skill<Configuration & { repos: any }>({
         },
         scripts: {
             type: ParameterType.StringArray,
-            displayName: "NPM scripts",
-            description: "Provide name of NPM scripts to run in order",
+            displayName: "npm scripts",
+            description: "Provide name of npm scripts to run in order",
             required: true,
+        },
+        publish: {
+            type: ParameterType.Boolean,
+            displayName: "Publish package",
+            description: "Publish npm package to registry once all scripts successfully executed",
+            required: false,
+        },
+        access: {
+            type: ParameterType.SingleChoice,
+            displayName: "Package access",
+            description: "Publish package with public or restricted access",
+            options: [
+                {
+                    text: "Public",
+                    value: "public",
+                },
+                {
+                    text: "Restricted",
+                    value: "restricted",
+                },
+            ],
+            required: false,
+        },
+        tag: {
+            type: ParameterType.StringArray,
+            displayName: "Distribution tags",
+            description:
+                "Register the published package with the given tags. If no tag is set here, the package will get published with a branch specific tag, e.g. `branch-<name of branch>`.",
+            required: false,
         },
         docker_cache: {
             type: ParameterType.StringArray,

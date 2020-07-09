@@ -17,5 +17,8 @@
 export interface Configuration {
     version: string;
     scripts: string[];
+    publish: boolean;
+    access: string;
+    tag: string[];
     docker_cache: string[];
 }
