@@ -302,10 +302,10 @@ ${lines.join("").trim()}
                 };
             } else {
                 body.push(`Running \`npm run --if-present ${script}\` completed successfully`);
-                await params.check.update({
+                /*await params.check.update({
                     conclusion: undefined,
                     body: body.join("\n\n---\n\n"),
-                });
+                });*/
             }
         }
         await params.check.update({
@@ -338,7 +338,6 @@ function extractAnnotations(lines: string[]): Annotation[] {
     for (const matcher of Matchers) {
         for (const pattern of matcher.pattern) {
             for (const l of logs) {
-                log.debug(`---${l.trim()}---`);
                 const match = new RegExp(pattern.regexp, "g").exec(l.trim());
                 if (match) {
                     annotations.push({
