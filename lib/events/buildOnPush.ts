@@ -119,7 +119,7 @@ const PrepareStep: NpmStep = {
         }
 
         // raise the check
-        params.check = await github.openCheck(ctx, params.project.id, {
+        params.check = await github.createCheck(ctx, params.project.id, {
             sha: ctx.data.Push[0].after.sha,
             title: "npm run",
             name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/run`,
@@ -302,10 +302,10 @@ ${lines.join("").trim()}
                 };
             } else {
                 body.push(`Running \`npm run --if-present ${script}\` completed successfully`);
-                /*await params.check.update({
+                await params.check.update({
                     conclusion: undefined,
                     body: body.join("\n\n---\n\n"),
-                });*/
+                });
             }
         }
         await params.check.update({
@@ -388,7 +388,7 @@ const NpmPublishStep: NpmStep = {
             args.push("--tag", gitBranchToNpmTag(push.branch));
         }
 
-        const check = await github.openCheck(ctx, params.project.id, {
+        const check = await github.createCheck(ctx, params.project.id, {
             sha: ctx.data.Push[0].after.sha,
             title: "npm publish",
             name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/publish`,
