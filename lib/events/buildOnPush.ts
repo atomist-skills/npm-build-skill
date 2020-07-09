@@ -17,11 +17,33 @@
 import { EventContext, EventHandler, github, log, project, repository, runSteps, secret, Step } from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
+import * as _ from "lodash";
 import * as os from "os";
 import * as path from "path";
 import { Configuration } from "../configuration";
 import { BuildOnPushSubscription } from "../typings/types";
-import * as _ from "lodash";
+
+const Matchers = [
+    {
+        name: "npm",
+        severity: "error",
+        report: "always",
+        pattern: [
+            // TypeScript compile output
+            {
+                regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+                groups: {
+                    path: 1,
+                    line: 2,
+                    column: 3,
+                    severity: 4,
+                    title: 5,
+                    message: 6,
+                },
+            },
+        ],
+    },
+];
 
 interface NpmParameters {
     project: project.Project;
@@ -77,28 +99,6 @@ const ValidateStep: NpmStep = {
 const PrepareStep: NpmStep = {
     name: "prepare",
     run: async (ctx, params) => {
-        // copy matcher
-        // const matcher = {
-        //     name: "npm",
-        //     severity: "error",
-        //     report: "always",
-        //     pattern: [
-        //         // TypeScript compile output
-        //         {
-        //             regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
-        //             groups: {
-        //                 path: 1,
-        //                 line: 2,
-        //                 column: 3,
-        //                 severity: 4,
-        //                 title: 5,
-        //                 message: 6,
-        //             },
-        //         },
-        //     ],
-        // };
-        // await fs.writeJson(path.join(process.env.ATOMIST_MATCHERS_DIR, "npm.matcher.json"), matcher);
-
         // copy creds
         const npmRc = path.join(os.homedir(), ".npmrc");
         if (process.env.NPM_NPMJS_CREDENTIALS) {
@@ -246,6 +246,7 @@ const NpmScriptsStep: NpmStep = {
         const push = ctx.data.Push[0];
         const cfg = ctx.configuration?.[0]?.parameters;
         const scripts = cfg.scripts;
+        const body = [];
         // Run scripts
         for (const script of scripts) {
             const lines = [];
@@ -259,14 +260,25 @@ const NpmScriptsStep: NpmStep = {
                 },
                 logCommand: false,
             });
-            if (result.status !== 0) {
+            const annotations = extractAnnotations(lines);
+            if (result.status !== 0 || annotations.length > 0) {
+                const home = process.env.ATOMIST_HOME || "/atm/home";
                 await params.check.update({
                     conclusion: "failure",
-                    body: `Running \`npm run --if-present ${script}\` errored:
+                    body: `${body.join("\n\n---\n\n")}Running \`npm run --if-present ${script}\` errored:
 
 \`\`\`
 ${lines.join("")}
 \`\`\``,
+                    annotations: annotations.map(r => ({
+                        annotationLevel: mapSeverity(r.severity),
+                        path: r.path.replace(home + "/", ""),
+                        startLine: r.line ? +r.line : undefined,
+                        endLine: r.line ? +r.line : undefined,
+                        startOffset: r.column ? +r.column : undefined,
+                        title: r.title,
+                        message: r.message,
+                    })),
                 });
                 return {
                     code: result.status,
@@ -274,6 +286,8 @@ ${lines.join("")}
                         push.repo.name
                     }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
                 };
+            } else {
+                body.push(`Running \`npm run --if-present ${script}\` completed successfully`);
             }
         }
         await params.check.update({
@@ -290,6 +304,53 @@ ${lines.join("")}
         };
     },
 };
+
+export interface Annotation {
+    path: string;
+    line: number;
+    column: number;
+    severity: "failure" | "notice" | "warning";
+    title: string;
+    message: string;
+}
+
+function extractAnnotations(logs: string[]): Annotation[] {
+    const annotations = [];
+    for (const matcher of Matchers) {
+        for (const pattern of matcher.pattern) {
+            for (const log of logs) {
+                const match = new RegExp(pattern.regexp, "g").exec(log.trim());
+                if (match) {
+                    annotations.push({
+                        match: match[0],
+                        path: match[pattern.groups.path],
+                        line: match[pattern.groups.line],
+                        column: match[pattern.groups.column],
+                        severity: mapSeverity((match[pattern.groups.severity] || "error").toLowerCase()),
+                        message: match[pattern.groups.message],
+                        title: match[pattern.groups.title],
+                    });
+                }
+            }
+        }
+    }
+    return annotations;
+}
+
+function mapSeverity(severity: string): "notice" | "warning" | "failure" {
+    switch (severity.toLowerCase()) {
+        case "error":
+            return "failure";
+        case "warning":
+        case "warn":
+            return "warning";
+        case "info":
+        case "information":
+            return "notice";
+        default:
+            return "notice";
+    }
+}
 
 const NpmPublishStep: NpmStep = {
     name: "npm publish",
