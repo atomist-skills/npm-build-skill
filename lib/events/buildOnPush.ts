@@ -270,7 +270,7 @@ const NpmScriptsStep: NpmStep = {
                     }Running \`npm run --if-present ${script}\` errored:
 
 \`\`\`
-${lines.join("")}
+${lines.join("").trim()}
 \`\`\``,
                     annotations: annotations.map(r => ({
                         annotationLevel: mapSeverity(r.severity),
@@ -324,8 +324,9 @@ function extractAnnotations(logs: string[]): Annotation[] {
     const annotations = [];
     for (const matcher of Matchers) {
         for (const pattern of matcher.pattern) {
-            for (const log of logs) {
-                const match = new RegExp(pattern.regexp, "g").exec(log.trim());
+            for (const l of logs) {
+                log.debug(`---${l.trim()}---`);
+                const match = new RegExp(pattern.regexp, "g").exec(l.trim());
                 if (match) {
                     annotations.push({
                         match: match[0],
@@ -398,7 +399,7 @@ const NpmPublishStep: NpmStep = {
                 conclusion: "failure",
                 body: `Running \`npm publish ${args.join(" ")}\` errored:
 \`\`\`
-${lines.join("")}
+${lines.join("").trim()}
 \`\`\``,
             });
             return {
@@ -412,7 +413,7 @@ ${lines.join("")}
             conclusion: "success",
             body: `Running \`npm publish ${args.join(" ")}\` completed successfully:
 \`\`\`
-${lines.join("")}
+${lines.join("").trim()}
 \`\`\``,
         });
         return {
