@@ -99,11 +99,11 @@ const PrepareStep: NpmStep = {
                 },
             ],
         };
-        await fs.writeJson(path.join(process.env.ATOMIST_MATCHERS_DIR, "npm.matcher.json"), matcher);
+        // await fs.writeJson(path.join(process.env.ATOMIST_MATCHERS_DIR, "npm.matcher.json"), matcher);
 
         // copy creds
+        const npmRc = path.join(os.homedir(), ".npmrc");
         if (process.env.NPM_NPMJS_CREDENTIALS) {
-            const npmRc = path.join(os.homedir(), ".npmrc");
             log.debug(`Provisioning NPM credentials to '${npmRc}'`);
             await fs.copyFile(process.env.NPM_NPMJS_CREDENTIALS, npmRc);
         }
@@ -130,6 +130,9 @@ const SetupNodeStep: NpmStep = {
                 code: result.status,
             };
         }
+        // set the unsafe-prem config
+        await params.project.spawn("bash", ["-c", `source $HOME/.nvm/nvm.sh && npm config set unsafe-perm true`]);
+
         const lines = [];
         result = await params.project.spawn("bash", ["-c", `source $HOME/.nvm/nvm.sh && nvm which ${cfg.version}`], {
             log: { write: msg => lines.push(msg) },

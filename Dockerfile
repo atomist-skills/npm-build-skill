@@ -20,14 +20,6 @@ RUN apt-get update && apt-get install -y \
         build-essential \
         && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd --gid 2866 atomist \
-    && useradd --home-dir /home/atomist --create-home --uid 2866 --gid 2866 --shell /bin/sh --skel /dev/null atomist
-
-RUN mkdir -p /skill \
-    && chown atomist:atomist /skill
-
-USER atomist:atomist
-
 # nvm
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 RUN echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.bashrc" \
