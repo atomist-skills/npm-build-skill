@@ -196,9 +196,9 @@ const NpmInstallStep: NpmStep = {
         const opts = { env: { ...process.env, NODE_ENV: "development", PATH: `${params.path}:${process.env.PATH}` } };
         let result;
         if (await fs.pathExists(params.project.path("package-lock.json"))) {
-            result = await params.project.spawn("npm", ["ci"], opts);
+            result = await params.project.spawn("npm", ["ci", `--cache=${params.project.path(".npm")}`], opts);
         } else {
-            result = await params.project.spawn("npm", ["install"], opts);
+            result = await params.project.spawn("npm", ["install", `--cache=${params.project.path(".npm")}`], opts);
         }
         if (result.status !== 0) {
             return {
