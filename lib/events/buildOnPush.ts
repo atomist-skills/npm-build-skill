@@ -113,7 +113,7 @@ const PrepareStep: NpmStep = {
             sha: ctx.data.Push[0].after.sha,
             title: "npm run",
             name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/run`,
-            body: `Running \`npm run ${ctx.configuration?.[0]?.parameters?.scripts.join(" ")}\``,
+            body: `Running \`npm run --if-present ${ctx.configuration?.[0]?.parameters?.scripts.join(" ")}\``,
         });
 
         return {
@@ -155,7 +155,6 @@ const SetupNodeStep: NpmStep = {
             logCommand: false,
         });
         params.path = path.dirname(lines.join("\n").trim());
-        log.debug(`Node and NPM path set to: ${params.path}`);
         if (result.status !== 0) {
             await params.check.update({
                 conclusion: "failure",
@@ -282,6 +281,9 @@ ${lines.join("")}
         }
         await params.check.update({
             conclusion: "success",
+            body: `Running \`npm run --if-present ${ctx.configuration?.[0]?.parameters?.scripts.join(
+                " ",
+            )}\` completed successfully`,
         });
         return {
             code: 0,
@@ -313,7 +315,7 @@ const NpmPublishStep: NpmStep = {
             sha: ctx.data.Push[0].after.sha,
             title: "npm publish",
             name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/publish`,
-            body: `Running \`npm publish ${args.join("")}\``,
+            body: `Running \`npm publish ${args.join(" ")}\``,
         });
 
         const lines = [];
