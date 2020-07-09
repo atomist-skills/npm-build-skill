@@ -98,7 +98,7 @@ const PrepareStep: NpmStep = {
                 },
             ],
         };
-        await fs.writeJson(process.env.ATOMIST_MATCHERS_DIR, matcher);
+        await fs.writeJson(path.join(process.env.ATOMIST_MATCHERS_DIR, "npm.matcher.json"), matcher);
 
         // copy creds
         if (process.env.NPM_NPMJS_CREDENTIALS) {
