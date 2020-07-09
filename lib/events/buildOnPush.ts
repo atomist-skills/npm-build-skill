@@ -117,6 +117,7 @@ const PrepareStep: NpmStep = {
 const SetupNodeStep: NpmStep = {
     name: "setup node",
     run: async (ctx, params) => {
+        const push = ctx.data.Push[0];
         const cfg = ctx.configuration?.[0]?.parameters;
         // Set up node version
         let result = await params.project.spawn("bash", [
@@ -135,15 +136,23 @@ const SetupNodeStep: NpmStep = {
         });
         params.path = path.dirname(lines.join("\n").trim());
         log.debug(`Node and NPM path set to: ${params.path}`);
-        return {
-            code: result.status,
-        };
+        if (result.status !== 0) {
+            return {
+                code: result.status,
+                reason: `\`nvm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
+                    0,
+                    7,
+                )}](${push.after.url})`,
+            };
+        }
+        return undefined;
     },
 };
 
 const NodeVersionStep: NpmStep = {
     name: "version",
     run: async (ctx, params) => {
+        const push = ctx.data.Push[0];
         const pj = await fs.readJson(params.project.path("package.json"));
         const branch = ctx.data.Push[0].branch.split("/").join(".");
         const branchSuffix = `${branch}.`;
@@ -158,9 +167,16 @@ const NodeVersionStep: NpmStep = {
         const result = await params.project.spawn("npm", ["version", "--no-git-tag-version", version], {
             env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
         });
-        return {
-            code: result.status,
-        };
+        if (result.status !== 0) {
+            return {
+                code: result.status,
+                reason: `\`npm version\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
+                    0,
+                    7,
+                )}](${push.after.url})`,
+            };
+        }
+        return undefined;
     },
 };
 
@@ -176,6 +192,7 @@ function formatDate(date = new Date(), format = "yyyymmddHHMMss", utc = true) {
 const NpmInstallStep: NpmStep = {
     name: "npm install",
     run: async (ctx, params) => {
+        const push = ctx.data.Push[0];
         const opts = { env: { ...process.env, NODE_ENV: "development", PATH: `${params.path}:${process.env.PATH}` } };
         let result;
         if (await fs.pathExists(params.project.path("package-lock.json"))) {
@@ -183,16 +200,23 @@ const NpmInstallStep: NpmStep = {
         } else {
             result = await params.project.spawn("npm", ["install"], opts);
         }
-
-        return {
-            code: result.status,
-        };
+        if (result.status !== 0) {
+            return {
+                code: result.status,
+                reason: `\`npm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
+                    0,
+                    7,
+                )}](${push.after.url})`,
+            };
+        }
+        return undefined;
     },
 };
 
 const NodeScriptsStep: NpmStep = {
     name: "npm run",
     run: async (ctx, params) => {
+        const push = ctx.data.Push[0];
         const cfg = ctx.configuration?.[0]?.parameters;
         const scripts = cfg.scripts;
         // Run scripts
@@ -203,12 +227,27 @@ const NodeScriptsStep: NpmStep = {
             if (result.status !== 0) {
                 return {
                     code: result.status,
+                    reason: `\`npm run ${script}\` failed on [${push.repo.owner}/${
+                        push.repo.name
+                    }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
                 };
             }
         }
         return {
             code: 0,
+            reason: `\`npm run ${scripts.join(" ")}\` passed on [${push.repo.owner}/${
+                push.repo.name
+            }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
         };
+    },
+};
+
+const GitTagStep: NpmStep = {
+    name: "git tag",
+    run: async (ctx, params) => {
+        await params.project.spawn("git", ["tag", "-m", `Version ${params.version}`, params.version]);
+        await params.project.spawn("git", ["push", "origin", params.version]);
+        return undefined;
     },
 };
 
@@ -223,6 +262,7 @@ export const handler: EventHandler<BuildOnPushSubscription, Configuration> = asy
             NodeVersionStep,
             NpmInstallStep,
             NodeScriptsStep,
+            GitTagStep,
         ],
     });
 };
