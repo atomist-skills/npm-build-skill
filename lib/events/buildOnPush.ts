@@ -25,6 +25,8 @@ import {
     secret,
     status,
     Step,
+    slack,
+    guid,
 } from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
@@ -372,6 +374,7 @@ const NpmPublishStep: NpmStep = {
     run: async (ctx, params) => {
         const cfg = ctx.configuration?.[0]?.parameters;
         const push = ctx.data.Push[0];
+        const pj = await fs.readJson(params.project.path("package.json"));
 
         const args = [];
         if (cfg.access) {
@@ -389,6 +392,23 @@ const NpmPublishStep: NpmStep = {
             name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/publish`,
             body: `Running \`npm publish ${args.join(" ")}\``,
         });
+        const id = guid();
+        const channels = push.repo?.channels?.map(c => c.name);
+        await ctx.message.send(
+            slack.progressMessage(
+                "npm publish",
+                `Publishing \`${pj.name}\``,
+                {
+                    counter: false,
+                    state: "in_process",
+                    count: 0,
+                    total: 1,
+                },
+                ctx,
+            ),
+            { channels },
+            { id },
+        );
 
         const captureLog = childProcess.captureLog();
         const result = await params.project.spawn("npm", ["publish", ...args], {
@@ -404,6 +424,21 @@ const NpmPublishStep: NpmStep = {
 ${captureLog.log.trim()}
 \`\`\``,
             });
+            await ctx.message.send(
+                slack.progressMessage(
+                    "npm publish",
+                    `Failed to publish *${pj.name}*`,
+                    {
+                        counter: false,
+                        state: "failure",
+                        count: 0,
+                        total: 1,
+                    },
+                    ctx,
+                ),
+                { channels },
+                { id },
+            );
             return status.failure(
                 `\`npm publish ${args.join(" ")}\` failed on [${push.repo.owner}/${
                     push.repo.name
@@ -417,6 +452,21 @@ ${captureLog.log.trim()}
 ${captureLog.log.trim()}
 \`\`\``,
         });
+        await ctx.message.send(
+            slack.progressMessage(
+                "npm publish",
+                `Successfully published *${pj.name}* with version \`${pj.version}\``,
+                {
+                    counter: false,
+                    state: "success",
+                    count: 1,
+                    total: 1,
+                },
+                ctx,
+            ),
+            { channels },
+            { id },
+        );
         return status.success(
             `\`npm publish ${args.join(" ")}\` passed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
                 0,
