@@ -395,6 +395,15 @@ const NpmPublishStep: NpmStep = {
         const push = ctx.data.Push[0];
         const pj = await fs.readJson(params.project.path("package.json"));
 
+        // add /.npm/ to the .npmignore file
+        const npmIgnore = params.project.path(".npmignore");
+        if (await fs.pathExists(npmIgnore)) {
+            const npmIgnoreContent = (await fs.readFile(npmIgnore)).toString();
+            await fs.writeFile(npmIgnore, `${npmIgnoreContent}\n/.npm/`);
+        } else {
+            await fs.writeFile(npmIgnore, "/.npm/");
+        }
+
         const args = [];
         if (cfg.access) {
             args.push("--access", cfg.access);
