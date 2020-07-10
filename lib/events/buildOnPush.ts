@@ -118,7 +118,9 @@ const CommandStep: NpmStep = {
     runWhen: async ctx => !!ctx.configuration?.[0]?.parameters?.command,
     run: async (ctx, params) => {
         const push = ctx.data.Push[0];
-        const result = await childProcess.spawnPromise("bash", ["-c", ctx.configuration?.[0]?.parameters?.command]);
+        const result = await childProcess.spawnPromise("bash", ["-c", ctx.configuration?.[0]?.parameters?.command], {
+            log: childProcess.ConsoleLog,
+        });
         if (result.status !== 0) {
             return status.failure(
                 `Failed to run command on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
