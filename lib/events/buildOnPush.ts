@@ -494,7 +494,7 @@ function gitBranchToNpmTag(branchName: string): string {
 
 const GitTagStep: NpmStep = {
     name: "git tag",
-    runWhen: async (ctx, params) => {
+    runWhen: async ctx => {
         return ctx.configuration?.[0]?.parameters?.gitTag;
     },
     run: async (ctx, params) => {
