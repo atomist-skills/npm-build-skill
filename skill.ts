@@ -88,6 +88,12 @@ export const Skill = skill<Configuration & { repos: any }>({
                 "Register the published package with the given tags. If no tag is set here, the package will get published with a branch specific tag, e.g. `branch-<name of branch>`.",
             required: false,
         },
+        gitTag: {
+            type: ParameterType.Boolean,
+            displayName: "Git tag",
+            description: "Create a Git tag using the `package.json` version",
+            required: false,
+        },
         docker_cache: {
             type: ParameterType.StringArray,
             displayName: "Cache files or folders",

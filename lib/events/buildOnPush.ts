@@ -494,6 +494,9 @@ function gitBranchToNpmTag(branchName: string): string {
 
 const GitTagStep: NpmStep = {
     name: "git tag",
+    runWhen: async (ctx, params) => {
+        return ctx.configuration?.[0]?.parameters?.gitTag;
+    },
     run: async (ctx, params) => {
         const pj = await fs.readJson(params.project.path("package.json"));
         await params.project.spawn("git", ["tag", "-m", `Version ${pj.version}`, pj.version]);

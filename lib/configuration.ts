@@ -20,5 +20,6 @@ export interface Configuration {
     publish: boolean;
     access: string;
     tag: string[];
+    gitTag: boolean;
     docker_cache: string[];
 }
