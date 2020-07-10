@@ -21,5 +21,6 @@ export interface Configuration {
     access: string;
     tag: string[];
     gitTag: boolean;
+    command: string;
     docker_cache: string[];
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Category, parameter, ParameterType, resourceProvider, skill } from "@atomist/skill";
+import { Category, LineStyle, parameter, ParameterType, resourceProvider, skill } from "@atomist/skill";
 import { Configuration } from "./lib/configuration";
 
 export const Skill = skill<Configuration & { repos: any }>({
@@ -92,6 +92,14 @@ export const Skill = skill<Configuration & { repos: any }>({
             type: ParameterType.Boolean,
             displayName: "Git tag",
             description: "Create a Git tag using the `package.json` version",
+            required: false,
+        },
+        command: {
+            type: ParameterType.String,
+            displayName: "Shell command",
+            description:
+                "Specify a shell command to be executed with `bash -c` on a Ubuntu-based environment to set up needed tools for your npm scripts",
+            lineStyle: LineStyle.Multiple,
             required: false,
         },
         docker_cache: {

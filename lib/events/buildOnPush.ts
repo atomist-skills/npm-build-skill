@@ -113,6 +113,23 @@ const ValidateStep: NpmStep = {
     },
 };
 
+const CommandStep: NpmStep = {
+    name: "command",
+    runWhen: async ctx => !!ctx.configuration?.[0]?.parameters?.command,
+    run: async (ctx, params) => {
+        const push = ctx.data.Push[0];
+        const result = await childProcess.spawnPromise("bash", ["-c", ctx.configuration?.[0]?.parameters?.command]);
+        if (result.status !== 0) {
+            return status.failure(
+                `Failed to run command on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+                    push.after.url
+                })`,
+            );
+        }
+        return status.success();
+    },
+};
+
 const PrepareStep: NpmStep = {
     name: "prepare",
     run: async (ctx, params) => {
@@ -511,6 +528,7 @@ export const handler: EventHandler<BuildOnPushSubscription, Configuration> = asy
         steps: [
             LoadProjectStep,
             ValidateStep,
+            CommandStep,
             PrepareStep,
             SetupNodeStep,
             NpmInstallStep,
