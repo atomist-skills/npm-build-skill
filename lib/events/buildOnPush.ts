@@ -394,10 +394,16 @@ const NpmPublishStep: NpmStep = {
         });
         const id = guid();
         const channels = push.repo?.channels?.map(c => c.name);
+        const header = `*${push.repo.owner}/${push.repo.name}/${push.branch}* at <${
+            push.after.url
+        }|\`${push.after.sha.slice(0, 7)}\`>\n`;
         await ctx.message.send(
             slack.progressMessage(
                 "npm publish",
-                `Publishing \`${pj.name}\``,
+                `${header}
+\`\`\`
+Publishing ${pj.name}
+\`\`\``,
                 {
                     counter: false,
                     state: "in_process",
@@ -427,7 +433,10 @@ ${captureLog.log.trim()}
             await ctx.message.send(
                 slack.progressMessage(
                     "npm publish",
-                    `Failed to publish *${pj.name}*`,
+                    `${header}
+\`\`\`
+Failed to publish ${pj.name}
+\`\`\``,
                     {
                         counter: false,
                         state: "failure",
@@ -455,7 +464,10 @@ ${captureLog.log.trim()}
         await ctx.message.send(
             slack.progressMessage(
                 "npm publish",
-                `Successfully published *${pj.name}* with version \`${pj.version}\``,
+                `${header}
+\`\`\`
+Successfully published ${pj.name} with version ${pj.version}
+\`\`\``,
                 {
                     counter: false,
                     state: "success",
