@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
-import { EventContext, EventHandler, github, log, project, repository, runSteps, secret, Step } from "@atomist/skill";
+import {
+    childProcess,
+    EventContext,
+    EventHandler,
+    github,
+    project,
+    repository,
+    runSteps,
+    secret,
+    status,
+    Step,
+} from "@atomist/skill";
 import * as df from "dateformat";
 import * as fs from "fs-extra";
 import * as _ from "lodash";
@@ -59,9 +70,9 @@ const Matchers = [
 
 interface NpmParameters {
     project: project.Project;
-    version: string;
     check: github.Check;
     path: string;
+    body: string[];
 }
 
 type NpmStep = Step<EventContext<BuildOnPushSubscription, Configuration>, NpmParameters>;
@@ -86,9 +97,7 @@ const LoadProjectStep: NpmStep = {
         );
         params.project = project;
 
-        return {
-            code: 0,
-        };
+        return status.success();
     },
 };
 
@@ -96,15 +105,9 @@ const ValidateStep: NpmStep = {
     name: "validate",
     run: async (ctx, params) => {
         if (!(await fs.pathExists(params.project.path("package.json")))) {
-            return {
-                visibility: "hidden",
-                code: 1,
-                reason: `Ignoring push to non-NPM project`,
-            };
+            return status.failure(`Ignoring push to non-NPM project`).hidden();
         }
-        return {
-            code: 0,
-        };
+        return status.success();
     },
 };
 
@@ -114,7 +117,6 @@ const PrepareStep: NpmStep = {
         // copy creds
         const npmRc = path.join(os.homedir(), ".npmrc");
         if (process.env.NPM_NPMJS_CREDENTIALS) {
-            log.debug(`Provisioning NPM credentials to '${npmRc}'`);
             await fs.copyFile(process.env.NPM_NPMJS_CREDENTIALS, npmRc);
         }
 
@@ -126,9 +128,7 @@ const PrepareStep: NpmStep = {
             body: `Running \`npm run --if-present ${ctx.configuration?.[0]?.parameters?.scripts.join(" ")}\``,
         });
 
-        return {
-            code: 0,
-        };
+        return status.success();
     },
 };
 
@@ -147,82 +147,35 @@ const SetupNodeStep: NpmStep = {
                 conclusion: "failure",
                 body: "`nvm install` failed",
             });
-            return {
-                code: result.status,
-                reason: `\`nvm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
-                    0,
-                    7,
-                )}](${push.after.url})`,
-            };
+            return status.failure(
+                `\`nvm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+                    push.after.url
+                })`,
+            );
         }
         // set the unsafe-prem config
         await params.project.spawn("bash", ["-c", `source $HOME/.nvm/nvm.sh && npm config set unsafe-perm true`]);
 
-        const lines = [];
+        const captureLog = childProcess.captureLog();
         result = await params.project.spawn("bash", ["-c", `source $HOME/.nvm/nvm.sh && nvm which ${cfg.version}`], {
-            log: { write: msg => lines.push(msg) },
+            log: captureLog,
             logCommand: false,
         });
-        params.path = path.dirname(lines.join("\n").trim());
+        params.path = path.dirname(captureLog.log.trim());
         if (result.status !== 0) {
             await params.check.update({
                 conclusion: "failure",
                 body: "`nvm which` failed",
             });
-            return {
-                code: result.status,
-                reason: `\`nvm which\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+            return status.failure(
+                `\`nvm which\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
                     push.after.url
                 })`,
-            };
+            );
         }
         return undefined;
     },
 };
-
-const NodeVersionStep: NpmStep = {
-    name: "version",
-    run: async (ctx, params) => {
-        const push = ctx.data.Push[0];
-        const pj = await fs.readJson(params.project.path("package.json"));
-        const branch = ctx.data.Push[0].branch.split("/").join(".");
-        const branchSuffix = `${branch}.`;
-
-        let pjVersion = pj.version;
-        if (!pjVersion || pjVersion.length === 0) {
-            pjVersion = "0.1.0";
-        }
-
-        const version = `${pjVersion}-${gitBranchToNpmVersion(branchSuffix)}${formatDate()}`;
-        params.version = version;
-        const result = await params.project.spawn("npm", ["version", "--no-git-tag-version", version], {
-            env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
-        });
-        if (result.status !== 0) {
-            await params.check.update({
-                conclusion: "failure",
-                body: "`npm version` failed",
-            });
-            return {
-                code: result.status,
-                reason: `\`npm version\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
-                    0,
-                    7,
-                )}](${push.after.url})`,
-            };
-        }
-        return undefined;
-    },
-};
-
-function gitBranchToNpmVersion(branchName: string): string {
-    // prettier-ignore
-    return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
-}
-
-function formatDate(date = new Date(), format = "yyyymmddHHMMss", utc = true) {
-    return df(date, format, utc);
-}
 
 const NpmInstallStep: NpmStep = {
     name: "npm install",
@@ -240,49 +193,93 @@ const NpmInstallStep: NpmStep = {
                 conclusion: "failure",
                 body: "`npm install` failed",
             });
-            return {
-                code: result.status,
-                reason: `\`npm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
-                    0,
-                    7,
-                )}](${push.after.url})`,
-            };
+            return status.failure(
+                `\`npm install\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+                    push.after.url
+                })`,
+            );
         }
         return undefined;
     },
 };
+
+const NodeVersionStep: NpmStep = {
+    name: "version",
+    runWhen: async (ctx, params) => {
+        const pj = await fs.readJson(params.project.path("package.json"));
+        return !pj.scripts?.version;
+    },
+    run: async (ctx, params) => {
+        const push = ctx.data.Push[0];
+        const pj = await fs.readJson(params.project.path("package.json"));
+        const branch = ctx.data.Push[0].branch.split("/").join(".");
+        const branchSuffix = `${branch}.`;
+
+        let pjVersion = pj.version;
+        if (!pjVersion || pjVersion.length === 0) {
+            pjVersion = "0.1.0";
+        }
+
+        const version = `${pjVersion}-${gitBranchToNpmVersion(branchSuffix)}${formatDate()}`;
+        const result = await params.project.spawn("npm", ["version", "--no-git-tag-version", version], {
+            env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+        });
+        if (result.status !== 0) {
+            await params.check.update({
+                conclusion: "failure",
+                body: "`npm version` failed",
+            });
+            return status.failure(
+                `\`npm version\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+                    push.after.url
+                })`,
+            );
+        }
+        return undefined;
+    },
+};
+
+function gitBranchToNpmVersion(branchName: string): string {
+    // prettier-ignore
+    return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
+}
+
+function formatDate(date = new Date(), format = "yyyymmddHHMMss", utc = true) {
+    return df(date, format, utc);
+}
 
 const NpmScriptsStep: NpmStep = {
     name: "npm run",
     run: async (ctx, params) => {
         const push = ctx.data.Push[0];
         const cfg = ctx.configuration?.[0]?.parameters;
-        const scripts = cfg.scripts;
-        const body = [];
+        let scripts = cfg.scripts;
+
+        // Test if the project overwrites the version step
+        const pj = await fs.readJson(params.project.path("package.json"));
+        if (pj.scripts.version) {
+            scripts = ["version", ...scripts];
+        }
+
         // Run scripts
         for (const script of scripts) {
-            const lines = [];
+            const captureLog = childProcess.captureLog();
             const result = await params.project.spawn("npm", ["run", "--if-present", script], {
                 env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
-                log: {
-                    write: msg => {
-                        lines.push(msg);
-                        DebugLog.write(msg);
-                    },
-                },
+                log: captureLog,
                 logCommand: false,
             });
-            const annotations = extractAnnotations(lines);
+            const annotations = extractAnnotations(captureLog.log);
             if (result.status !== 0 || annotations.length > 0) {
                 const home = process.env.ATOMIST_HOME || "/atm/home";
                 await params.check.update({
                     conclusion: "failure",
                     body: `${
-                        body.length > 0 ? `${body.join("\n\n---\n\n")}\n\n---\n\n` : ""
+                        params.body.length > 0 ? `${params.body.join("\n\n---\n\n")}\n\n---\n\n` : ""
                     }Running \`npm run --if-present ${script}\` errored:
 
 \`\`\`
-${lines.join("").trim()}
+${captureLog.log.trim()}
 \`\`\``,
                     annotations: annotations.map(r => ({
                         annotationLevel: r.severity,
@@ -294,30 +291,30 @@ ${lines.join("").trim()}
                         message: r.message,
                     })),
                 });
-                return {
-                    code: result.status,
-                    reason: `\`npm run ${script}\` failed on [${push.repo.owner}/${
-                        push.repo.name
-                    }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
-                };
+                return status.failure(
+                    `\`npm run ${script}\` failed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
+                        0,
+                        7,
+                    )}](${push.after.url})`,
+                );
             } else {
-                body.push(`Running \`npm run --if-present ${script}\` completed successfully`);
+                params.body.push(`Running \`npm run --if-present ${script}\` completed successfully`);
                 await params.check.update({
                     conclusion: undefined,
-                    body: body.join("\n\n---\n\n"),
+                    body: params.body.join("\n\n---\n\n"),
                 });
             }
         }
         await params.check.update({
             conclusion: "success",
-            body: body.join("\n\n---\n\n"),
+            body: params.body.join("\n\n---\n\n"),
         });
-        return {
-            code: 0,
-            reason: `\`npm run ${scripts.join(" ")}\` passed on [${push.repo.owner}/${
-                push.repo.name
-            }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
-        };
+        return status.success(
+            `\`npm run ${scripts.join(" ")}\` passed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
+                0,
+                7,
+            )}](${push.after.url})`,
+        );
     },
 };
 
@@ -330,8 +327,8 @@ export interface Annotation {
     message: string;
 }
 
-function extractAnnotations(lines: string[]): Annotation[] {
-    const logs = lines.join("").split("\n");
+function extractAnnotations(lines: string): Annotation[] {
+    const logs = lines.split("\n");
     const annotations = [];
     for (const matcher of Matchers) {
         for (const pattern of matcher.pattern) {
@@ -393,15 +390,10 @@ const NpmPublishStep: NpmStep = {
             body: `Running \`npm publish ${args.join(" ")}\``,
         });
 
-        const lines = [];
+        const captureLog = childProcess.captureLog();
         const result = await params.project.spawn("npm", ["publish", ...args], {
             env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
-            log: {
-                write: msg => {
-                    lines.push(msg);
-                    DebugLog.write(msg);
-                },
-            },
+            log: captureLog,
             logCommand: false,
         });
         if (result.status !== 0) {
@@ -409,29 +401,28 @@ const NpmPublishStep: NpmStep = {
                 conclusion: "failure",
                 body: `Running \`npm publish ${args.join(" ")}\` errored:
 \`\`\`
-${lines.join("").trim()}
+${captureLog.log.trim()}
 \`\`\``,
             });
-            return {
-                code: result.status,
-                reason: `\`npm publish ${args.join(" ")}\` failed on [${push.repo.owner}/${
+            return status.failure(
+                `\`npm publish ${args.join(" ")}\` failed on [${push.repo.owner}/${
                     push.repo.name
                 }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
-            };
+            );
         }
         await check.update({
             conclusion: "success",
             body: `Running \`npm publish ${args.join(" ")}\` completed successfully:
 \`\`\`
-${lines.join("").trim()}
+${captureLog.log.trim()}
 \`\`\``,
         });
-        return {
-            code: 0,
-            reason: `\`npm publish ${args.join(" ")}\` passed on [${push.repo.owner}/${
-                push.repo.name
-            }/${push.after.sha.slice(0, 7)}](${push.after.url})`,
-        };
+        return status.success(
+            `\`npm publish ${args.join(" ")}\` passed on [${push.repo.owner}/${push.repo.name}/${push.after.sha.slice(
+                0,
+                7,
+            )}](${push.after.url})`,
+        );
     },
 };
 
@@ -442,8 +433,9 @@ function gitBranchToNpmTag(branchName: string): string {
 const GitTagStep: NpmStep = {
     name: "git tag",
     run: async (ctx, params) => {
-        await params.project.spawn("git", ["tag", "-m", `Version ${params.version}`, params.version]);
-        await params.project.spawn("git", ["push", "origin", params.version]);
+        const pj = await fs.readJson(params.project.path("package.json"));
+        await params.project.spawn("git", ["tag", "-m", `Version ${pj.version}`, pj.version]);
+        await params.project.spawn("git", ["push", "origin", pj.version]);
         return undefined;
     },
 };
@@ -456,22 +448,11 @@ export const handler: EventHandler<BuildOnPushSubscription, Configuration> = asy
             ValidateStep,
             PrepareStep,
             SetupNodeStep,
-            NodeVersionStep,
             NpmInstallStep,
+            NodeVersionStep,
             NpmScriptsStep,
             NpmPublishStep,
             GitTagStep,
         ],
     });
-};
-
-const DebugLog = {
-    write: (msg): void => {
-        let line = msg;
-        if (line.endsWith("\n")) {
-            line = line.slice(0, -1);
-        }
-        const lines = line.split("\n");
-        lines.forEach(l => log.debug(l.trimRight()));
-    },
 };
