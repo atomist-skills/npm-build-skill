@@ -516,5 +516,6 @@ export const handler: EventHandler<BuildOnPushSubscription, Configuration> = asy
             NpmPublishStep,
             GitTagStep,
         ],
+        parameters: { body: [] },
     });
 };
