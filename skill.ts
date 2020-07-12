@@ -42,7 +42,7 @@ export const Skill = skill<Configuration & { repos: any }>({
 
     containers: {
         npm: {
-            image: "gcr.io/atomist-container-skills/npm-skill",
+            image: "gcr.io/atomist-container-skills/npm-build-skill",
         },
     },
 
