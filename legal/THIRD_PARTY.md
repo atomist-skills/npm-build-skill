@@ -1,6 +1,6 @@
-# `@atomist/npm-skill`
+# `@atomist/npm-build-skill`
 
-This page details all runtime dependencies of `@atomist/npm-skill`.
+This page details all runtime dependencies of `@atomist/npm-build-skill`.
 
 ## Licenses
 
