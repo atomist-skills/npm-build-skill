@@ -1,4 +1,4 @@
-# `atomist/npm-skill`
+# `atomist/npm-build-skill`
 
 <!---atomist-skill-description:start--->
 

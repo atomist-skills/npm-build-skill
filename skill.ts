@@ -18,14 +18,14 @@ import { Category, LineStyle, parameter, ParameterType, resourceProvider, skill 
 import { Configuration } from "./lib/configuration";
 
 export const Skill = skill<Configuration & { repos: any }>({
-    name: "npm-skill",
+    name: "npm-build-skill",
     namespace: "atomist",
-    displayName: "npm Scripts",
+    displayName: "npm Build",
     author: "Atomist",
     categories: [Category.DevEx],
     license: "Apache-2.0",
-    homepageUrl: "https://github.com/atomist-skills/npm-skill",
-    repositoryUrl: "https://github.com/atomist-skills/npm-skill.git",
+    homepageUrl: "https://github.com/atomist-skills/npm-build-skill",
+    repositoryUrl: "https://github.com/atomist-skills/npm-build-skill.git",
     iconUrl: "file://docs/images/icon.svg",
 
     resourceProviders: {
