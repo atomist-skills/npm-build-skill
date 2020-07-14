@@ -7,9 +7,9 @@
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.6.0",
-    "@graphql-codegen/cli": "1.11.2",
-    "@graphql-codegen/typescript": "1.11.2",
-    "@graphql-codegen/typescript-operations": "1.11.2",
+    "@graphql-codegen/cli": "^1.17.0",
+    "@graphql-codegen/typescript": "^1.17.0",
+    "@graphql-codegen/typescript-operations": "^1.17.0",
     "@types/mocha": "^7.0.2",
     "@types/power-assert": "^1.5.3",
     "@typescript-eslint/eslint-plugin": "^3.5.0",
