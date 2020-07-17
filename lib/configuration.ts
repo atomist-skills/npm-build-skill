@@ -15,12 +15,12 @@
  */
 
 export interface Configuration {
-    version: string;
-    scripts: string[];
-    publish: boolean;
-    access: string;
-    tag: string[];
-    gitTag: boolean;
-    command: string;
-    docker_cache: string[];
+	version: string;
+	scripts: string[];
+	publish: boolean;
+	access: string;
+	tag: string[];
+	gitTag: boolean;
+	command: string;
+	docker_cache: string[];
 }

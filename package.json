@@ -1,7 +1,7 @@
 {
   "main": "node_modules/@atomist/skill/lib/function.js",
   "dependencies": {
-    "@atomist/skill": "0.1.0-master.20200714125418",
+    "@atomist/skill": "0.1.0-master.20200717081342",
     "@types/dateformat": "^3.0.1",
     "dateformat": "^3.0.3"
   },
