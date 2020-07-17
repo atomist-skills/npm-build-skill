@@ -2,7 +2,7 @@
 
 <!---atomist-skill-description:start--->
 
-Atomist Skill to run NPM scripts
+Run npm scripts to compile or test your JavaScript project
 
 <!---atomist-skill-description:end--->
 
@@ -20,7 +20,7 @@ Connect and configure this integration:
 -   **Slack**
 
 The **GitHub** integration must be configured in order to use this skill. At least one repository must be selected.
-We recommand that you configure the **Slack** integration.
+We recommend that you configure the **Slack** integration.
 
 # How to configure
 

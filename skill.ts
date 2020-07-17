@@ -47,17 +47,18 @@ export const Skill = skill<Configuration & { repos: any }>({
     },
 
     parameters: {
-        version: {
-            type: ParameterType.String,
-            displayName: "Node.js version",
-            description: "Version of Node.js to install (should be valid nvm alias or version)",
-            required: false,
-        },
         scripts: {
             type: ParameterType.StringArray,
             displayName: "npm scripts",
             description: "Provide name of npm scripts to run in order",
             required: true,
+        },
+        version: {
+            type: ParameterType.String,
+            displayName: "Node.js version",
+            description:
+                "Version of Node.js to install (should be a valid [nvm alias or version](https://github.com/nvm-sh/nvm#usage)",
+            required: false,
         },
         publish: {
             type: ParameterType.Boolean,
