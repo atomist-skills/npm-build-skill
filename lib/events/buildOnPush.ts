@@ -119,7 +119,7 @@ const CommandStep: NpmStep = {
     run: async (ctx, params) => {
         const push = ctx.data.Push[0];
         const result = await childProcess.spawnPromise("bash", ["-c", ctx.configuration?.[0]?.parameters?.command], {
-            log: childProcess.ConsoleLog,
+            log: childProcess.captureLog(),
         });
         if (result.status !== 0) {
             return status.failure(
