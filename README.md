@@ -15,7 +15,7 @@ Run npm scripts to compile or test your JavaScript project
 Run npm scripts with different versions of Node.js and npm in a consistent container environment.
 When your tests pass, you can immediately publish the package to the npmjs.com Registry.
 
--   Set up this skill with multiple configuration to run your tests on different versions of Node.js
+-   Set up this skill with multiple configurations to run your tests on different versions of Node.js
 -   Decide to publish your packages consistently from a centralized configuration
 -   Own the container environment and install tools needed for your build and test
 
