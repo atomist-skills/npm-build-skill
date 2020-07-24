@@ -44,7 +44,8 @@ const Matchers = [
 		pattern: [
 			// TypeScript < 3.9 compile output
 			{
-				regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+				regexp:
+					"^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
 				groups: {
 					path: 1,
 					line: 2,
@@ -56,7 +57,8 @@ const Matchers = [
 			},
 			// TypeScript 3.9 compile output
 			{
-				regexp: "^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+				regexp:
+					"^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
 				groups: {
 					path: 1,
 					line: 2,
@@ -285,7 +287,10 @@ const NodeVersionStep: NpmStep = {
 			"npm",
 			["version", "--no-git-tag-version", version],
 			{
-				env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+				env: {
+					...process.env,
+					PATH: `${params.path}:${process.env.PATH}`,
+				},
 			},
 		);
 		if (result.status !== 0) {
@@ -332,7 +337,10 @@ const NpmScriptsStep: NpmStep = {
 				"npm",
 				["run", "--if-present", script],
 				{
-					env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+					env: {
+						...process.env,
+						PATH: `${params.path}:${process.env.PATH}`,
+					},
 					log: captureLog,
 					logCommand: false,
 				},
@@ -411,7 +419,9 @@ function extractAnnotations(lines: string): Annotation[] {
 						line: match[pattern.groups.line],
 						column: match[pattern.groups.column],
 						severity: mapSeverity(
-							(match[pattern.groups.severity] || "error").toLowerCase(),
+							(
+								match[pattern.groups.severity] || "error"
+							).toLowerCase(),
 						),
 						message: match[pattern.groups.message],
 						title: match[pattern.groups.title],
@@ -473,9 +483,9 @@ const NpmPublishStep: NpmStep = {
 		});
 		const id = guid();
 		const channels = push.repo?.channels?.map(c => c.name);
-		const header = `*${push.repo.owner}/${push.repo.name}/${push.branch}* at <${
-			push.after.url
-		}|\`${push.after.sha.slice(0, 7)}\`>\n`;
+		const header = `*${push.repo.owner}/${push.repo.name}/${
+			push.branch
+		}* at <${push.after.url}|\`${push.after.sha.slice(0, 7)}\`>\n`;
 		await ctx.message.send(
 			slack.progressMessage(
 				"npm publish",
@@ -528,14 +538,18 @@ Failed to publish ${pj.name}
 				{ id },
 			);
 			return status.failure(
-				`\`npm publish ${args.join(" ")}\` failed on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+				`\`npm publish ${args.join(" ")}\` failed on [${
+					push.repo.owner
+				}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+					push.after.url
+				})`,
 			);
 		}
 		await check.update({
 			conclusion: "success",
-			body: `Running \`npm publish ${args.join(" ")}\` completed successfully:
+			body: `Running \`npm publish ${args.join(
+				" ",
+			)}\` completed successfully:
 \`\`\`
 ${captureLog.log.trim()}
 \`\`\``,
