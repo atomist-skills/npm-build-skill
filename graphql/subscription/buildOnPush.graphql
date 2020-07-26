@@ -1,6 +1,7 @@
 subscription buildOnPush {
   Push {
     repo {
+      defaultBranch
       url
       owner
       name

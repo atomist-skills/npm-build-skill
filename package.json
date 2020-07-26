@@ -1,7 +1,7 @@
 {
   "main": "node_modules/@atomist/skill/lib/function.js",
   "dependencies": {
-    "@atomist/skill": "0.1.0-master.20200726070009"
+    "@atomist/skill": "0.1.1-1"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.6.0",

@@ -536,7 +536,10 @@ Failed to publish ${pj.name}
 			);
 		}
 
-		const tags = cfg.tag || ["next"];
+		const tags = cfg.tag || [];
+		if (ctx.data.Push[0].branch === ctx.data.Push[0].repo.defaultBranch) {
+			tags.push("next");
+		}
 		for (const tag of tags) {
 			await params.project.spawn(
 				"npm",
