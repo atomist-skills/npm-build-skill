@@ -1,7 +1,8 @@
 {
   "main": "node_modules/@atomist/skill/lib/function.js",
   "dependencies": {
-    "@atomist/skill": "0.1.1-1"
+    "@atomist/skill": "0.1.1-1",
+    "p-retry": "^4.2.0"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.6.0",

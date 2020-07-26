@@ -33,6 +33,7 @@ import * as os from "os";
 import * as path from "path";
 import { Configuration } from "../configuration";
 import { BuildOnPushSubscription } from "../typings/types";
+import * as pRetry from "p-retry";
 
 const Matchers = [
 	{
@@ -261,68 +262,12 @@ const NpmInstallStep: NpmStep = {
 	},
 };
 
-const NodeVersionStep: NpmStep = {
-	name: "version",
-	runWhen: async (ctx, params) => {
-		const pj = await fs.readJson(params.project.path("package.json"));
-		return !pj.scripts?.version;
-	},
-	run: async (ctx, params) => {
-		const push = ctx.data.Push[0];
-		const pj = await fs.readJson(params.project.path("package.json"));
-
-		let pjVersion = pj.version;
-		if (!pjVersion || pjVersion.length === 0) {
-			pjVersion = "0.0.0";
-		}
-
-		const version = await github.nextTag(
-			params.project.id,
-			"prerelease",
-			pjVersion,
-		);
-		const result = await params.project.spawn(
-			"npm",
-			["version", "--no-git-tag-version", version],
-			{
-				env: {
-					...process.env,
-					PATH: `${params.path}:${process.env.PATH}`,
-				},
-			},
-		);
-		if (result.status !== 0) {
-			await params.check.update({
-				conclusion: "failure",
-				body: "`npm version` failed",
-			});
-			return status.failure(
-				`\`npm version\` failed on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
-			);
-		}
-		return status.success();
-	},
-};
-
-function gitBranchToNpmVersion(branchName: string): string {
-	// prettier-ignore
-	return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
-}
-
 const NpmScriptsStep: NpmStep = {
 	name: "npm run",
 	run: async (ctx, params) => {
 		const push = ctx.data.Push[0];
 		const cfg = ctx.configuration?.[0]?.parameters;
-		let scripts = cfg.scripts;
-
-		// Test if the project overwrites the version step
-		const pj = await fs.readJson(params.project.path("package.json"));
-		if (pj.scripts.version) {
-			scripts = ["version", ...scripts];
-		}
+		const scripts = cfg.scripts;
 
 		// Run scripts
 		for (const script of scripts) {
@@ -440,6 +385,84 @@ function mapSeverity(severity: string): "notice" | "warning" | "failure" {
 		default:
 			return "notice";
 	}
+}
+
+const NpmVersionStep: NpmStep = {
+	name: "version",
+	runWhen: async ctx => ctx.configuration?.[0]?.parameters.publish,
+	run: async (ctx, params) => {
+		const push = ctx.data.Push[0];
+		let pj = await fs.readJson(params.project.path("package.json"));
+
+		let pjVersion = pj.version;
+		if (!pjVersion || pjVersion.length === 0) {
+			pjVersion = "0.0.0";
+		}
+
+		let version;
+		if (!pj.scripts?.version) {
+			version = await pRetry(
+				async () => {
+					const tag = await github.nextTag(
+						params.project.id,
+						"prerelease",
+						pjVersion,
+					);
+					await params.project.exec("git", [
+						"tag",
+						"-m",
+						`Version ${tag}`,
+						tag,
+					]);
+					await params.project.exec("git", ["push", "origin", tag]);
+					return tag;
+				},
+				{
+					retries: 5,
+					maxTimeout: 2500,
+					minTimeout: 1000,
+					randomize: true,
+				},
+			);
+		} else {
+			await params.project.spawn("npm", ["run", "version"], {
+				env: {
+					...process.env,
+					PATH: `${params.path}:${process.env.PATH}`,
+				},
+			});
+			pj = await fs.readJson(params.project.path("package.json"));
+			version = pj.version;
+		}
+
+		const result = await params.project.spawn(
+			"npm",
+			["version", "--no-git-tag-version", version],
+			{
+				env: {
+					...process.env,
+					PATH: `${params.path}:${process.env.PATH}`,
+				},
+			},
+		);
+		if (result.status !== 0) {
+			await params.check.update({
+				conclusion: "failure",
+				body: "`npm version` failed",
+			});
+			return status.failure(
+				`\`npm version\` failed on [${push.repo.owner}/${
+					push.repo.name
+				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+			);
+		}
+		return status.success();
+	},
+};
+
+function gitBranchToNpmVersion(branchName: string): string {
+	// prettier-ignore
+	return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
 }
 
 const NpmPublishStep: NpmStep = {
@@ -592,24 +615,6 @@ function gitBranchToNpmTag(branchName: string): string {
 	return `branch-${gitBranchToNpmVersion(branchName)}`;
 }
 
-const GitTagStep: NpmStep = {
-	name: "git tag",
-	runWhen: async ctx => {
-		return ctx.configuration?.[0]?.parameters?.gitTag;
-	},
-	run: async (ctx, params) => {
-		const pj = await fs.readJson(params.project.path("package.json"));
-		await params.project.spawn("git", [
-			"tag",
-			"-m",
-			`Version ${pj.version}`,
-			pj.version,
-		]);
-		await params.project.spawn("git", ["push", "origin", pj.version]);
-		return status.success();
-	},
-};
-
 export const handler: EventHandler<
 	BuildOnPushSubscription,
 	Configuration
@@ -624,9 +629,8 @@ export const handler: EventHandler<
 			SetupNodeStep,
 			NpmInstallStep,
 			NpmScriptsStep,
-			NodeVersionStep,
+			NpmVersionStep,
 			NpmPublishStep,
-			GitTagStep,
 		],
 		parameters: { body: [] },
 	});
