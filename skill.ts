@@ -29,7 +29,7 @@ export const Skill = skill<Configuration & { repos: any }>({
 	namespace: "atomist",
 	displayName: "npm Build",
 	author: "Atomist",
-	categories: [Category.DevEx],
+	categories: [Category.Deploy],
 	license: "Apache-2.0",
 	homepageUrl: "https://github.com/atomist-skills/npm-build-skill",
 	repositoryUrl: "https://github.com/atomist-skills/npm-build-skill.git",
@@ -38,7 +38,10 @@ export const Skill = skill<Configuration & { repos: any }>({
 	resourceProviders: {
 		github: resourceProvider.gitHub({ minRequired: 1 }),
 		chat: resourceProvider.chat({ minRequired: 0 }),
-		npmjs: resourceProvider.npmJSRegistry({ minRequired: 0, maxAllowed: 1 }),
+		npmjs: resourceProvider.npmJSRegistry({
+			minRequired: 0,
+			maxAllowed: 1,
+		}),
 	},
 
 	containers: {
