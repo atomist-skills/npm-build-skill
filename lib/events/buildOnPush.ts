@@ -28,9 +28,7 @@ import {
 	slack,
 	guid,
 } from "@atomist/skill";
-import * as df from "dateformat";
 import * as fs from "fs-extra";
-import * as _ from "lodash";
 import * as os from "os";
 import * as path from "path";
 import { Configuration } from "../configuration";
@@ -44,7 +42,8 @@ const Matchers = [
 		pattern: [
 			// TypeScript < 3.9 compile output
 			{
-				regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+				regexp:
+					"^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
 				groups: {
 					path: 1,
 					line: 2,
@@ -56,7 +55,8 @@ const Matchers = [
 			},
 			// TypeScript 3.9 compile output
 			{
-				regexp: "^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+				regexp:
+					"^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
 				groups: {
 					path: 1,
 					line: 2,
@@ -270,22 +270,25 @@ const NodeVersionStep: NpmStep = {
 	run: async (ctx, params) => {
 		const push = ctx.data.Push[0];
 		const pj = await fs.readJson(params.project.path("package.json"));
-		const branch = ctx.data.Push[0].branch.split("/").join(".");
-		const branchSuffix = `${branch}.`;
 
 		let pjVersion = pj.version;
 		if (!pjVersion || pjVersion.length === 0) {
-			pjVersion = "0.1.0";
+			pjVersion = "0.0.0";
 		}
 
-		const version = `${pjVersion}-${gitBranchToNpmVersion(
-			branchSuffix,
-		)}${formatDate()}`;
+		const version = await github.nextTag(
+			params.project.id,
+			"prerelease",
+			pjVersion,
+		);
 		const result = await params.project.spawn(
 			"npm",
 			["version", "--no-git-tag-version", version],
 			{
-				env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+				env: {
+					...process.env,
+					PATH: `${params.path}:${process.env.PATH}`,
+				},
 			},
 		);
 		if (result.status !== 0) {
@@ -308,10 +311,6 @@ function gitBranchToNpmVersion(branchName: string): string {
 	return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
 }
 
-function formatDate(date = new Date(), format = "yyyymmddHHMMss", utc = true) {
-	return df(date, format, utc);
-}
-
 const NpmScriptsStep: NpmStep = {
 	name: "npm run",
 	run: async (ctx, params) => {
@@ -332,7 +331,10 @@ const NpmScriptsStep: NpmStep = {
 				"npm",
 				["run", "--if-present", script],
 				{
-					env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
+					env: {
+						...process.env,
+						PATH: `${params.path}:${process.env.PATH}`,
+					},
 					log: captureLog,
 					logCommand: false,
 				},
@@ -411,7 +413,9 @@ function extractAnnotations(lines: string): Annotation[] {
 						line: match[pattern.groups.line],
 						column: match[pattern.groups.column],
 						severity: mapSeverity(
-							(match[pattern.groups.severity] || "error").toLowerCase(),
+							(
+								match[pattern.groups.severity] || "error"
+							).toLowerCase(),
 						),
 						message: match[pattern.groups.message],
 						title: match[pattern.groups.title],
@@ -459,11 +463,7 @@ const NpmPublishStep: NpmStep = {
 		if (cfg.access) {
 			args.push("--access", cfg.access);
 		}
-		if (cfg.tag) {
-			args.push(..._.flatten(cfg.tag.map(t => ["--tag", t])));
-		} else {
-			args.push("--tag", gitBranchToNpmTag(push.branch));
-		}
+		args.push("--tag", gitBranchToNpmTag(push.branch));
 
 		const check = await github.createCheck(ctx, params.project.id, {
 			sha: ctx.data.Push[0].after.sha,
@@ -473,9 +473,9 @@ const NpmPublishStep: NpmStep = {
 		});
 		const id = guid();
 		const channels = push.repo?.channels?.map(c => c.name);
-		const header = `*${push.repo.owner}/${push.repo.name}/${push.branch}* at <${
-			push.after.url
-		}|\`${push.after.sha.slice(0, 7)}\`>\n`;
+		const header = `*${push.repo.owner}/${push.repo.name}/${
+			push.branch
+		}* at <${push.after.url}|\`${push.after.sha.slice(0, 7)}\`>\n`;
 		await ctx.message.send(
 			slack.progressMessage(
 				"npm publish",
@@ -528,14 +528,33 @@ Failed to publish ${pj.name}
 				{ id },
 			);
 			return status.failure(
-				`\`npm publish ${args.join(" ")}\` failed on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+				`\`npm publish ${args.join(" ")}\` failed on [${
+					push.repo.owner
+				}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
+					push.after.url
+				})`,
 			);
 		}
+
+		const tags = cfg.tag || ["next"];
+		for (const tag of tags) {
+			await params.project.spawn(
+				"npm",
+				["dist-tag", "add", `${pj.name}@${pj.version}`, tag],
+				{
+					env: {
+						...process.env,
+						PATH: `${params.path}:${process.env.PATH}`,
+					},
+				},
+			);
+		}
+
 		await check.update({
 			conclusion: "success",
-			body: `Running \`npm publish ${args.join(" ")}\` completed successfully:
+			body: `Running \`npm publish ${args.join(
+				" ",
+			)}\` completed successfully:
 \`\`\`
 ${captureLog.log.trim()}
 \`\`\``,
