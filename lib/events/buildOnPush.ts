@@ -603,7 +603,7 @@ const GitTagStep: NpmStep = {
 			pj.version,
 		]);
 		await params.project.spawn("git", ["push", "origin", pj.version]);
-		return undefined;
+		return status.success();
 	},
 };
 
