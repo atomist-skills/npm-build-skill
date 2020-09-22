@@ -1,5 +1,5 @@
-schema: graphql/schema.json
-documents: graphql/**/*.graphql
+schema: node_modules/@atomist/skill/graphql/schema.json
+documents: node_modules/@atomist/skill/graphql/**/*.graphql
 generates:
   ./lib/typings/types.ts:
     plugins:

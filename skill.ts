@@ -112,5 +112,5 @@ export const Skill = skill<Configuration & { repos: any }>({
 		repos: parameter.repoFilter(),
 	},
 
-	subscriptions: ["file://graphql/subscription/*.graphql"],
+	subscriptions: ["@atomist/skill/github/onPush"],
 });

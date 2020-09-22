@@ -32,7 +32,7 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { Configuration } from "../configuration";
-import { BuildOnPushSubscription } from "../typings/types";
+import { OnPushSubscription } from "../typings/types";
 import * as pRetry from "p-retry";
 
 const Matchers = [
@@ -79,7 +79,7 @@ interface NpmParameters {
 }
 
 type NpmStep = Step<
-	EventContext<BuildOnPushSubscription, Configuration>,
+	EventContext<OnPushSubscription, Configuration>,
 	NpmParameters
 >;
 
@@ -233,7 +233,7 @@ const NpmInstallStep: NpmStep = {
 				PATH: `${params.path}:${process.env.PATH}`,
 			},
 		};
-		let result;
+		let result: childProcess.SpawnPromiseReturns;
 		if (await fs.pathExists(params.project.path("package-lock.json"))) {
 			result = await params.project.spawn(
 				"npm",
@@ -399,7 +399,7 @@ const NpmVersionStep: NpmStep = {
 			pjVersion = "0.0.0";
 		}
 
-		let version;
+		let version: string;
 		if (!pj.scripts?.version) {
 			version = await pRetry(
 				async () => {
@@ -616,7 +616,7 @@ function gitBranchToNpmTag(branchName: string): string {
 }
 
 export const handler: EventHandler<
-	BuildOnPushSubscription,
+	OnPushSubscription,
 	Configuration
 > = async ctx =>
 	runSteps({
