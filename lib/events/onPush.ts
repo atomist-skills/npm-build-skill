@@ -19,20 +19,20 @@ import {
 	EventContext,
 	EventHandler,
 	github,
+	guid,
 	project,
 	repository,
 	runSteps,
 	secret,
+	slack,
 	status,
 	Step,
-	slack,
-	guid,
+	subscription,
 } from "@atomist/skill";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { Configuration } from "../configuration";
-import { OnPushSubscription } from "../typings/types";
 import * as pRetry from "p-retry";
 
 const Matchers = [
@@ -79,7 +79,7 @@ interface NpmParameters {
 }
 
 type NpmStep = Step<
-	EventContext<OnPushSubscription, Configuration>,
+	EventContext<subscription.types.OnPushSubscription, Configuration>,
 	NpmParameters
 >;
 
@@ -616,7 +616,7 @@ function gitBranchToNpmTag(branchName: string): string {
 }
 
 export const handler: EventHandler<
-	OnPushSubscription,
+	subscription.types.OnPushSubscription,
 	Configuration
 > = async ctx =>
 	runSteps({

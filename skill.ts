@@ -25,14 +25,8 @@ import {
 import { Configuration } from "./lib/configuration";
 
 export const Skill = skill<Configuration & { repos: any }>({
-	name: "npm-build-skill",
-	namespace: "atomist",
 	displayName: "npm Build",
-	author: "Atomist",
 	categories: [Category.Deploy],
-	license: "Apache-2.0",
-	homepageUrl: "https://github.com/atomist-skills/npm-build-skill",
-	repositoryUrl: "https://github.com/atomist-skills/npm-build-skill.git",
 	iconUrl: "file://docs/images/icon.svg",
 
 	resourceProviders: {
