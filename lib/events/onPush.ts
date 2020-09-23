@@ -29,7 +29,6 @@ import {
 	Step,
 	subscription,
 } from "@atomist/skill";
-import { Octokit } from "@octokit/rest";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as pRetry from "p-retry";
@@ -325,9 +324,9 @@ const NpmVersionStep: NpmStep = {
 				apiUrl: repo.org.provider.apiUrl,
 			}),
 		);
-		const octokit = new Octokit({
-			auth: credential.token,
-			userAgent: "@atomist/npm-build-skill 0.1.0",
+		const octokit = github.api({
+			apiUrl: repo.org?.provider?.apiUrl,
+			credential,
 		});
 
 		let version: string;
