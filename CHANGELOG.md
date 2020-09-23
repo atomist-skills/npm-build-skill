@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.1.1...HEAD)
 
+### Added
+
+-   Make git and npm tags branch-aware. [#30](https://github.com/atomist-skills/npm-build-skill/issues/30)
+
 ## [0.1.1](https://github.com/atomist-skills/npm-skill/compare/0.1.0...0.1.1) - 2020-07-28
 
 ## [0.1.0](https://github.com/atomist-skills/npm-skill/tree/0.1.0) - 2020-07-17
