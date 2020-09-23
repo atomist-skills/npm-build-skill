@@ -31,45 +31,12 @@ import {
 } from "@atomist/skill";
 import * as fs from "fs-extra";
 import * as os from "os";
-import * as path from "path";
-import { Configuration } from "../configuration";
 import * as pRetry from "p-retry";
-
-const Matchers = [
-	{
-		name: "npm",
-		severity: "error",
-		report: "always",
-		pattern: [
-			// TypeScript < 3.9 compile output
-			{
-				regexp:
-					"^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
-				groups: {
-					path: 1,
-					line: 2,
-					column: 3,
-					severity: 4,
-					title: 5,
-					message: 6,
-				},
-			},
-			// TypeScript 3.9 compile output
-			{
-				regexp:
-					"^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
-				groups: {
-					path: 1,
-					line: 2,
-					column: 3,
-					severity: 4,
-					title: 5,
-					message: 6,
-				},
-			},
-		],
-	},
-];
+import * as path from "path";
+import { extractAnnotations } from "../annotation";
+import { gitBranchToNpmTag } from "../branch";
+import { Configuration } from "../configuration";
+import { nextPrereleaseTag } from "../tag";
 
 interface NpmParameters {
 	project: project.Project;
@@ -335,81 +302,54 @@ ${captureLog.log.trim()}
 	},
 };
 
-export interface Annotation {
-	path: string;
-	line: number;
-	column: number;
-	severity: "failure" | "notice" | "warning";
-	title: string;
-	message: string;
-}
-
-function extractAnnotations(lines: string): Annotation[] {
-	const logs = lines.split("\n");
-	const annotations = [];
-	for (const matcher of Matchers) {
-		for (const pattern of matcher.pattern) {
-			for (const l of logs) {
-				const match = new RegExp(pattern.regexp, "g").exec(l.trim());
-				if (match) {
-					annotations.push({
-						match: match[0],
-						path: match[pattern.groups.path],
-						line: match[pattern.groups.line],
-						column: match[pattern.groups.column],
-						severity: mapSeverity(
-							(
-								match[pattern.groups.severity] || "error"
-							).toLowerCase(),
-						),
-						message: match[pattern.groups.message],
-						title: match[pattern.groups.title],
-					});
-				}
-			}
-		}
-	}
-	return annotations;
-}
-
-function mapSeverity(severity: string): "notice" | "warning" | "failure" {
-	switch (severity.toLowerCase()) {
-		case "error":
-			return "failure";
-		case "warning":
-		case "warn":
-			return "warning";
-		case "info":
-		case "information":
-			return "notice";
-		default:
-			return "notice";
-	}
-}
-
 const NpmVersionStep: NpmStep = {
 	name: "version",
-	runWhen: async ctx => ctx.configuration?.[0]?.parameters.publish,
+	runWhen: async ctx =>
+		ctx.configuration?.[0]?.parameters.publish &&
+		ctx.configuration?.[0]?.parameters.publish !== "no",
 	run: async (ctx, params) => {
 		const push = ctx.data.Push[0];
 		let pj = await fs.readJson(params.project.path("package.json"));
 
-		let pjVersion = pj.version;
-		if (!pjVersion || pjVersion.length === 0) {
-			pjVersion = "0.0.0";
-		}
+		const pjVersion =
+			pj.version ||
+			(await github.nextTag(params.project.id, "patch")) ||
+			"0.1.0";
+
+		const repo = push.repo;
+		const credential = await ctx.credential.resolve(
+			secret.gitHubAppToken({
+				owner: repo.owner,
+				repo: repo.name,
+				apiUrl: repo.org.provider.apiUrl,
+			}),
+		);
+		const octokit = github.api({
+			apiUrl: repo.org?.provider?.apiUrl,
+			credential,
+		});
 
 		let version: string;
 		if (!pj.scripts?.version) {
 			version = await pRetry(
 				async () => {
-					const tag = await github.nextTag(
-						params.project.id,
-						"prerelease",
-						pjVersion,
+					const tags = await octokit.paginate(
+						"GET /repos/:owner/:repo/tags",
+						{
+							owner: repo.owner,
+							repo: repo.name,
+						},
+						response => response.data.map(t => t.name),
 					);
+					const tag = nextPrereleaseTag({
+						branch: push.branch,
+						defaultBranch: repo.defaultBranch,
+						nextReleaseVersion: pjVersion,
+						tags,
+					});
 					await params.project.exec("git", [
 						"tag",
+						"-a",
 						"-m",
 						`Version ${tag}`,
 						tag,
@@ -460,14 +400,13 @@ const NpmVersionStep: NpmStep = {
 	},
 };
 
-function gitBranchToNpmVersion(branchName: string): string {
-	// prettier-ignore
-	return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
-}
-
 const NpmPublishStep: NpmStep = {
 	name: "npm publish",
-	runWhen: async ctx => ctx.configuration?.[0]?.parameters.publish,
+	runWhen: async ctx =>
+		ctx.configuration?.[0]?.parameters.publish &&
+		ctx.configuration?.[0]?.parameters.publish !== "no" &&
+		(ctx.configuration?.[0]?.parameters.publish === "all" ||
+			ctx.data.Push[0].branch === ctx.data.Push[0].repo.defaultBranch),
 	run: async (ctx, params) => {
 		const cfg = ctx.configuration?.[0]?.parameters;
 		const push = ctx.data.Push[0];
@@ -476,7 +415,7 @@ const NpmPublishStep: NpmStep = {
 		// add /.npm/ to the .npmignore file
 		const npmIgnore = params.project.path(".npmignore");
 		if (await fs.pathExists(npmIgnore)) {
-			const npmIgnoreContent = (await fs.readFile(npmIgnore)).toString();
+			const npmIgnoreContent = await fs.readFile(npmIgnore, "utf8");
 			await fs.writeFile(npmIgnore, `${npmIgnoreContent}\n/.npm/`);
 		} else {
 			await fs.writeFile(npmIgnore, "/.npm/");
@@ -560,7 +499,7 @@ Failed to publish ${pj.name}
 		}
 
 		const tags = cfg.tag || [];
-		if (ctx.data.Push[0].branch === ctx.data.Push[0].repo.defaultBranch) {
+		if (push.branch === push.repo.defaultBranch) {
 			tags.push("next");
 		}
 		for (const tag of tags) {
@@ -610,10 +549,6 @@ Successfully published ${pj.name} with version ${pj.version}
 		);
 	},
 };
-
-function gitBranchToNpmTag(branchName: string): string {
-	return `branch-${gitBranchToNpmVersion(branchName)}`;
-}
 
 export const handler: EventHandler<
 	subscription.types.OnPushSubscription,

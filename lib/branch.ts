@@ -13,3 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/** Remove non-tag-worthy characters from git branch. */
+export function cleanGitBranch(branchName: string): string {
+	return branchName.replace(/\//g, "-").replace(/_/g, "-").replace(/@/g, "");
+}
+
+/** Return cleaned branch name prepended with "branch-". */
+export function gitBranchToNpmTag(branchName: string): string {
+	return `branch-${cleanGitBranch(branchName)}`;
+}
