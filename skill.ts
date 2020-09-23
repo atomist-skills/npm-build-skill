@@ -59,10 +59,16 @@ export const Skill = skill<Configuration & { repos: any }>({
 			required: false,
 		},
 		publish: {
-			type: ParameterType.Boolean,
+			type: ParameterType.SingleChoice,
 			displayName: "Publish package",
 			description:
 				"Publish npm package to registry once all scripts successfully executed",
+			options: [
+				{ text: "No", value: "no" },
+				{ text: "Default branch only", value: "default" },
+				{ text: "All branches", value: "all" },
+			],
+			defaultValue: "no",
 			required: false,
 		},
 		access: {
