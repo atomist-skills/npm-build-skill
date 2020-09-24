@@ -69,7 +69,7 @@ export const Skill = skill<Configuration & { repos: any }>({
 				{ text: "All branches", value: "all" },
 			],
 			defaultValue: "no",
-			required: false,
+			required: true,
 		},
 		access: {
 			type: ParameterType.SingleChoice,

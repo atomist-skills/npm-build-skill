@@ -15,11 +15,11 @@
  */
 
 export interface Configuration {
-	version: string;
-	scripts: string[];
 	publish: string;
-	access: string;
-	tag: string[];
-	command: string;
-	docker_cache: string[];
+	scripts: string[];
+	version?: string;
+	access?: string;
+	tag?: string[];
+	command?: string;
+	docker_cache?: string[];
 }
