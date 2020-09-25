@@ -39,19 +39,18 @@ export function nextPrereleaseTag(args: NextPrereleaseTagArgs): string {
 	}
 	const semverTags = args.tags.filter(t => semver.valid(t));
 	const cleanBranch = cleanGitBranch(args.branch);
+	const prereleaseBranch =
+		args.branch === args.defaultBranch
+			? cleanBranch
+			: `branch-${cleanBranch}`;
 	const nextVersion = args.nextReleaseVersion;
-	const prefixRegExp =
-		args.branch !== args.defaultBranch
-			? RegExp(`^${nextVersion}-${cleanBranch}\\.(?:0|[1-9]\\d*)$`)
-			: RegExp(`^${nextVersion}-(?:0|[1-9]\\d*)$`);
+	const prefixRegExp = RegExp(
+		`^${nextVersion}-${prereleaseBranch}\\.(?:0|[1-9]\\d*)$`,
+	);
 	const matchingTags = semverTags.filter(t => prefixRegExp.test(t));
 	const sortedTags = matchingTags.sort((t1, t2) => semver.compare(t2, t1));
 	if (sortedTags.length < 1) {
-		return (
-			`${nextVersion}-` +
-			(args.branch !== args.defaultBranch ? `${cleanBranch}.` : "") +
-			"0"
-		);
+		return `${nextVersion}-${prereleaseBranch}.0`;
 	}
 	return semver.inc(sortedTags[0], "prerelease");
 }

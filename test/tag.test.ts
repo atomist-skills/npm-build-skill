@@ -26,7 +26,7 @@ describe("tag", () => {
 				nextReleaseVersion: "0.1.0",
 				tags: [],
 			});
-			const e = "0.1.0-0";
+			const e = "0.1.0-main.0";
 			assert(n === e);
 		});
 
@@ -36,25 +36,25 @@ describe("tag", () => {
 				defaultBranch: "main",
 				nextReleaseVersion: "2.4.6",
 				tags: [
-					"0.1.0-0",
+					"0.1.0-main.0",
 					"0.1.0",
-					"1.0.0-0",
-					"1.0.0-feature.0",
+					"1.0.0-main.0",
+					"1.0.0-branch-feature.0",
 					"1.0.0",
-					"1.0.1-0",
+					"1.0.1-main.0",
 					"1.0.1",
-					"2.0.0-0",
+					"2.0.0-main.0",
 					"2.0.0",
-					"2.0.1-0",
-					"2.1.0-0",
+					"2.0.1-main.0",
+					"2.1.0-main.0",
 					"2.1.0",
-					"2.3.0-0",
+					"2.3.0-main.0",
 					"2.4.0",
-					"2.4.1-0",
+					"2.4.1-main.0",
 					"2.4.1",
 				],
 			});
-			const e = "2.4.6-0";
+			const e = "2.4.6-main.0";
 			assert(n === e);
 		});
 
@@ -64,28 +64,28 @@ describe("tag", () => {
 				defaultBranch: "main",
 				nextReleaseVersion: "2.1.1",
 				tags: [
-					"0.1.0-0",
+					"0.1.0-main.0",
 					"0.1.0",
-					"1.0.0-0",
-					"1.0.0-feature.0",
+					"1.0.0-main.0",
+					"1.0.0-branch-feature.0",
 					"1.0.0",
-					"1.0.1-0",
+					"1.0.1-main.0",
 					"1.0.1",
-					"2.0.0-0",
+					"2.0.0-main.0",
 					"2.0.0",
-					"2.0.1-0",
-					"2.1.0-0",
+					"2.0.1-main.0",
+					"2.1.0-main.0",
 					"2.1.0",
-					"2.1.1-0",
+					"2.1.1-main.0",
 					"2.1.1-1",
-					"2.1.1-feature.0",
-					"2.1.1-feature.1",
-					"2.1.1-feature.2",
-					"2.1.1-feature.3",
-					"2.1.1-2",
+					"2.1.1-branch-feature.0",
+					"2.1.1-branch-feature.1",
+					"2.1.1-branch-feature.2",
+					"2.1.1-branch-feature.3",
+					"2.1.1-main.2",
 				],
 			});
-			const e = "2.1.1-3";
+			const e = "2.1.1-main.3";
 			assert(n === e);
 		});
 
@@ -95,28 +95,28 @@ describe("tag", () => {
 				defaultBranch: "main",
 				nextReleaseVersion: "2.1.1",
 				tags: [
-					"0.1.0-0",
+					"0.1.0-main.0",
 					"0.1.0",
-					"1.0.0-0",
-					"1.0.0-feature.0",
+					"1.0.0-main.0",
+					"1.0.0-branch-feature.0",
 					"1.0.0",
-					"1.0.1-0",
+					"1.0.1-main.0",
 					"1.0.1",
-					"2.0.0-0",
+					"2.0.0-main.0",
 					"2.0.0",
-					"2.0.1-0",
-					"2.1.0-0",
+					"2.0.1-main.0",
+					"2.1.0-main.0",
 					"2.1.0",
-					"2.1.1-0",
+					"2.1.1-main.0",
 					"2.1.1-1",
-					"2.1.1-feature.0",
-					"2.1.1-feature.1",
-					"2.1.1-feature.2",
-					"2.1.1-feature.3",
-					"2.1.1-2",
+					"2.1.1-branch-feature.0",
+					"2.1.1-branch-feature.1",
+					"2.1.1-branch-feature.2",
+					"2.1.1-branch-feature.3",
+					"2.1.1-main.2",
 				],
 			});
-			const e = "2.1.1-big-changes-in-stores.0";
+			const e = "2.1.1-branch-big-changes-in-stores.0";
 			assert(n === e);
 		});
 
@@ -126,28 +126,28 @@ describe("tag", () => {
 				defaultBranch: "main",
 				nextReleaseVersion: "2.1.1",
 				tags: [
-					"0.1.0-0",
+					"0.1.0-main.0",
 					"0.1.0",
-					"1.0.0-0",
-					"1.0.0-feature.0",
+					"1.0.0-main.0",
+					"1.0.0-branch-feature.0",
 					"1.0.0",
-					"1.0.1-0",
+					"1.0.1-main.0",
 					"1.0.1",
-					"2.0.0-0",
+					"2.0.0-main.0",
 					"2.0.0",
-					"2.0.1-0",
-					"2.1.0-0",
+					"2.0.1-main.0",
+					"2.1.0-main.0",
 					"2.1.0",
-					"2.1.1-0",
+					"2.1.1-main.0",
 					"2.1.1-1",
-					"2.1.1-feature.0",
-					"2.1.1-feature.1",
-					"2.1.1-feature.2",
-					"2.1.1-feature.3",
-					"2.1.1-2",
+					"2.1.1-branch-feature.0",
+					"2.1.1-branch-feature.1",
+					"2.1.1-branch-feature.2",
+					"2.1.1-branch-feature.3",
+					"2.1.1-main.2",
 				],
 			});
-			const e = "2.1.1-feature.4";
+			const e = "2.1.1-branch-feature.4";
 			assert(n === e);
 		});
 	});
