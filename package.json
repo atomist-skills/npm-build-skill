@@ -11,7 +11,7 @@
   "homepage": "https://github.com/atomist-skills/npm-build-skill#readme",
   "license": "Apache-2.0",
   "dependencies": {
-    "@atomist/skill": "^0.2.3",
+    "@atomist/skill": "^0.3.0-main.17",
     "fs-extra": "^9.0.1",
     "p-retry": "^4.2.0",
     "semver": "^7.3.2"

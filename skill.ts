@@ -24,10 +24,11 @@ import {
 } from "@atomist/skill";
 import { Configuration } from "./lib/configuration";
 
-export const Skill = skill<Configuration & { repos: any }>({
+export const Skill = skill<
+	Configuration & { repos: any; subscription_filter: any }
+>({
 	displayName: "npm Build",
 	categories: [Category.Deploy],
-	iconUrl: "file://docs/images/icon.svg",
 
 	resourceProviders: {
 		github: resourceProvider.gitHub({ minRequired: 1 }),
@@ -45,6 +46,23 @@ export const Skill = skill<Configuration & { repos: any }>({
 	},
 
 	parameters: {
+		subscription_filter: {
+			type: ParameterType.MultiChoice,
+			displayName: "Triggers",
+			description: "Select one or more trigger for this skill",
+			options: [
+				{
+					text: "GitHub > push",
+					value: "onPush",
+				},
+				{
+					text: "GitHub > tag",
+					value: "onTag",
+				},
+			],
+			defaultValues: ["onPush"],
+			required: true,
+		},
 		scripts: {
 			type: ParameterType.StringArray,
 			displayName: "npm scripts",
@@ -112,5 +130,8 @@ export const Skill = skill<Configuration & { repos: any }>({
 		repos: parameter.repoFilter(),
 	},
 
-	subscriptions: ["@atomist/skill/github/onPush"],
+	subscriptions: [
+		"@atomist/skill/github/onPush",
+		"@atomist/skill/github/onTag",
+	],
 });

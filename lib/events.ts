@@ -33,10 +33,10 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as pRetry from "p-retry";
 import * as path from "path";
-import { extractAnnotations } from "../annotation";
-import { gitBranchToNpmTag } from "../branch";
-import { Configuration } from "../configuration";
-import { nextPrereleaseTag } from "../tag";
+import { extractAnnotations } from "./annotation";
+import { gitBranchToNpmTag } from "./branch";
+import { Configuration } from "./configuration";
+import { nextPrereleaseTag } from "./tag";
 
 interface NpmParameters {
 	project: project.Project;
@@ -46,15 +46,22 @@ interface NpmParameters {
 }
 
 type NpmStep = Step<
-	EventContext<subscription.types.OnPushSubscription, Configuration>,
+	EventContext<
+		| subscription.types.OnPushSubscription
+		| subscription.types.OnTagSubscription,
+		Configuration
+	>,
 	NpmParameters
 >;
 
 const LoadProjectStep: NpmStep = {
 	name: "load",
 	run: async (ctx, params) => {
-		const push = ctx.data.Push[0];
-		const repo = push.repo;
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
 
 		const credential = await ctx.credential.resolve(
 			secret.gitHubAppToken({
@@ -93,21 +100,29 @@ const ValidateStep: NpmStep = {
 
 const CommandStep: NpmStep = {
 	name: "command",
-	runWhen: async ctx => !!ctx.configuration?.[0]?.parameters?.command,
+	runWhen: async ctx => !!ctx.configuration?.parameters?.command,
 	run: async ctx => {
-		const push = ctx.data.Push[0];
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
+		const commit =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.after ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
 		const result = await childProcess.spawnPromise(
 			"bash",
-			["-c", ctx.configuration?.[0]?.parameters?.command],
+			["-c", ctx.configuration?.parameters?.command],
 			{
 				log: childProcess.captureLog(),
 			},
 		);
 		if (result.status !== 0) {
 			return status.failure(
-				`Failed to run command on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+				`Failed to run command on [${repo.owner}/${
+					repo.name
+				}/${commit.sha.slice(0, 7)}](${commit.url})`,
 			);
 		}
 		return status.success();
@@ -117,6 +132,10 @@ const CommandStep: NpmStep = {
 const PrepareStep: NpmStep = {
 	name: "prepare",
 	run: async (ctx, params) => {
+		const commit =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.after ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
 		// copy creds
 		const npmRc = path.join(os.homedir(), ".npmrc");
 		if (process.env.NPM_NPMJS_CREDENTIALS) {
@@ -125,10 +144,10 @@ const PrepareStep: NpmStep = {
 
 		// raise the check
 		params.check = await github.createCheck(ctx, params.project.id, {
-			sha: ctx.data.Push[0].after.sha,
+			sha: commit.sha,
 			title: "npm run",
-			name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/run`,
-			body: `Running \`npm run --if-present ${ctx.configuration?.[0]?.parameters?.scripts.join(
+			name: `${ctx.skill.name}/${ctx.configuration?.name}/run`,
+			body: `Running \`npm run --if-present ${ctx.configuration?.parameters?.scripts.join(
 				" ",
 			)}\``,
 		});
@@ -140,8 +159,16 @@ const PrepareStep: NpmStep = {
 const SetupNodeStep: NpmStep = {
 	name: "setup node",
 	run: async (ctx, params) => {
-		const push = ctx.data.Push[0];
-		const cfg = ctx.configuration?.[0]?.parameters;
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
+		const commit =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.after ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+		const cfg = ctx.configuration?.parameters;
 		// Set up node version
 		let result = await params.project.spawn("bash", [
 			"-c",
@@ -153,9 +180,9 @@ const SetupNodeStep: NpmStep = {
 				body: "`nvm install` failed",
 			});
 			return status.failure(
-				`\`nvm install\` failed on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+				`\`nvm install\` failed on [${repo.owner}/${
+					repo.name
+				}/${commit.sha.slice(0, 7)}](${commit.url})`,
 			);
 		}
 		// set the unsafe-prem config
@@ -180,9 +207,9 @@ const SetupNodeStep: NpmStep = {
 				body: "`nvm which` failed",
 			});
 			return status.failure(
-				`\`nvm which\` failed on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+				`\`nvm which\` failed on [${repo.owner}/${
+					repo.name
+				}/${commit.sha.slice(0, 7)}](${commit.url})`,
 			);
 		}
 		return status.success();
@@ -192,7 +219,15 @@ const SetupNodeStep: NpmStep = {
 const NpmInstallStep: NpmStep = {
 	name: "npm install",
 	run: async (ctx, params) => {
-		const push = ctx.data.Push[0];
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
+		const commit =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.after ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
 		const opts = {
 			env: {
 				...process.env,
@@ -220,9 +255,9 @@ const NpmInstallStep: NpmStep = {
 				body: "`npm install` failed",
 			});
 			return status.failure(
-				`\`npm install\` failed on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+				`\`npm install\` failed on [${repo.owner}/${
+					repo.name
+				}/${commit.sha.slice(0, 7)}](${commit.url})`,
 			);
 		}
 		return status.success();
@@ -232,8 +267,16 @@ const NpmInstallStep: NpmStep = {
 const NpmScriptsStep: NpmStep = {
 	name: "npm run",
 	run: async (ctx, params) => {
-		const push = ctx.data.Push[0];
-		const cfg = ctx.configuration?.[0]?.parameters;
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
+		const commit =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.after ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+		const cfg = ctx.configuration?.parameters;
 		const scripts = cfg.scripts;
 
 		// Run scripts
@@ -276,9 +319,9 @@ ${captureLog.log.trim()}
 					})),
 				});
 				return status.failure(
-					`\`npm run ${script}\` failed on [${push.repo.owner}/${
-						push.repo.name
-					}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+					`\`npm run ${script}\` failed on [${repo.owner}/${
+						repo.name
+					}/${commit.sha.slice(0, 7)}](${commit.url})`,
 				);
 			} else {
 				params.body.push(
@@ -295,9 +338,9 @@ ${captureLog.log.trim()}
 			body: params.body.join("\n\n---\n\n"),
 		});
 		return status.success(
-			`\`npm run ${scripts.join(" ")}\` passed on [${push.repo.owner}/${
-				push.repo.name
-			}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+			`\`npm run ${scripts.join(" ")}\` passed on [${repo.owner}/${
+				repo.name
+			}/${commit.sha.slice(0, 7)}](${commit.url})`,
 		);
 	},
 };
@@ -305,10 +348,22 @@ ${captureLog.log.trim()}
 const NpmVersionStep: NpmStep = {
 	name: "version",
 	runWhen: async ctx =>
-		ctx.configuration?.[0]?.parameters.publish &&
-		ctx.configuration?.[0]?.parameters.publish !== "no",
+		ctx.configuration?.parameters.publish &&
+		ctx.configuration?.parameters.publish !== "no",
 	run: async (ctx, params) => {
-		const push = ctx.data.Push[0];
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
+		const commit =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.after ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+		const branch =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.branch ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
 		let pj = await fs.readJson(params.project.path("package.json"));
 
 		const pjVersion =
@@ -316,7 +371,6 @@ const NpmVersionStep: NpmStep = {
 			(await github.nextTag(params.project.id, "patch")) ||
 			"0.1.0";
 
-		const repo = push.repo;
 		const credential = await ctx.credential.resolve(
 			secret.gitHubAppToken({
 				owner: repo.owner,
@@ -342,7 +396,7 @@ const NpmVersionStep: NpmStep = {
 						response => response.data.map(t => t.name),
 					);
 					const tag = nextPrereleaseTag({
-						branch: push.branch,
+						branch,
 						defaultBranch: repo.defaultBranch,
 						nextReleaseVersion: pjVersion,
 						tags,
@@ -391,9 +445,9 @@ const NpmVersionStep: NpmStep = {
 				body: "`npm version` failed",
 			});
 			return status.failure(
-				`\`npm version\` failed on [${push.repo.owner}/${
-					push.repo.name
-				}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+				`\`npm version\` failed on [${repo.owner}/${
+					repo.name
+				}/${commit.sha.slice(0, 7)}](${commit.url})`,
 			);
 		}
 		return status.success();
@@ -402,14 +456,38 @@ const NpmVersionStep: NpmStep = {
 
 const NpmPublishStep: NpmStep = {
 	name: "npm publish",
-	runWhen: async ctx =>
-		ctx.configuration?.[0]?.parameters.publish &&
-		ctx.configuration?.[0]?.parameters.publish !== "no" &&
-		(ctx.configuration?.[0]?.parameters.publish === "all" ||
-			ctx.data.Push[0].branch === ctx.data.Push[0].repo.defaultBranch),
+	runWhen: async ctx => {
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
+		const branch =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.branch ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
+		return (
+			ctx.configuration?.parameters.publish &&
+			ctx.configuration?.parameters.publish !== "no" &&
+			(ctx.configuration?.parameters.publish === "all" ||
+				branch === repo.defaultBranch)
+		);
+	},
 	run: async (ctx, params) => {
-		const cfg = ctx.configuration?.[0]?.parameters;
-		const push = ctx.data.Push[0];
+		const cfg = ctx.configuration?.parameters;
+		const repo =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.repo ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+				?.repo;
+		const commit =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.after ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+		const branch =
+			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
+				?.branch ||
+			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
 		const pj = await fs.readJson(params.project.path("package.json"));
 
 		// add /.npm/ to the .npmignore file
@@ -425,19 +503,19 @@ const NpmPublishStep: NpmStep = {
 		if (cfg.access) {
 			args.push("--access", cfg.access);
 		}
-		args.push("--tag", gitBranchToNpmTag(push.branch));
+		args.push("--tag", gitBranchToNpmTag(branch));
 
 		const check = await github.createCheck(ctx, params.project.id, {
-			sha: ctx.data.Push[0].after.sha,
+			sha: commit.sha,
 			title: "npm publish",
-			name: `${ctx.skill.name}/${ctx.configuration?.[0]?.name}/publish`,
+			name: `${ctx.skill.name}/${ctx.configuration?.name}/publish`,
 			body: `Running \`npm publish ${args.join(" ")}\``,
 		});
 		const id = guid();
-		const channels = push.repo?.channels?.map(c => c.name);
-		const header = `*${push.repo.owner}/${push.repo.name}/${
-			push.branch
-		}* at <${push.after.url}|\`${push.after.sha.slice(0, 7)}\`>\n`;
+		const channels = repo?.channels?.map(c => c.name);
+		const header = `*${repo.owner}/${repo.name}/${branch}* at <${
+			commit.url
+		}|\`${commit.sha.slice(0, 7)}\`>\n`;
 		await ctx.message.send(
 			slack.progressMessage(
 				"npm publish",
@@ -490,16 +568,14 @@ Failed to publish ${pj.name}
 				{ id },
 			);
 			return status.failure(
-				`\`npm publish ${args.join(" ")}\` failed on [${
-					push.repo.owner
-				}/${push.repo.name}/${push.after.sha.slice(0, 7)}](${
-					push.after.url
-				})`,
+				`\`npm publish ${args.join(" ")}\` failed on [${repo.owner}/${
+					repo.name
+				}/${commit.sha.slice(0, 7)}](${commit.url})`,
 			);
 		}
 
 		const tags = cfg.tag || [];
-		if (push.branch === push.repo.defaultBranch) {
+		if (branch === repo.defaultBranch) {
 			tags.push("next");
 		}
 		for (const tag of tags) {
@@ -543,15 +619,16 @@ Successfully published ${pj.name} with version ${pj.version}
 			{ id },
 		);
 		return status.success(
-			`\`npm publish ${args.join(" ")}\` passed on [${push.repo.owner}/${
-				push.repo.name
-			}/${push.after.sha.slice(0, 7)}](${push.after.url})`,
+			`\`npm publish ${args.join(" ")}\` passed on [${repo.owner}/${
+				repo.name
+			}/${commit.sha.slice(0, 7)}](${commit.url})`,
 		);
 	},
 };
 
 export const handler: EventHandler<
-	subscription.types.OnPushSubscription,
+	| subscription.types.OnPushSubscription
+	| subscription.types.OnTagSubscription,
 	Configuration
 > = async ctx =>
 	runSteps({
