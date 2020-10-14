@@ -138,8 +138,8 @@ const PrepareStep: NpmStep = {
 			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
 		// copy creds
 		const npmRc = path.join(os.homedir(), ".npmrc");
-		if (process.env.NPM_NPMJS_CREDENTIALS) {
-			await fs.copyFile(process.env.NPM_NPMJS_CREDENTIALS, npmRc);
+		if (process.env.ATOMIST_NPMRC) {
+			await fs.copyFile(process.env.ATOMIST_NPMRC, npmRc);
 		}
 
 		// raise the check
