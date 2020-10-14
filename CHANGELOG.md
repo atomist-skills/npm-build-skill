@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.2.0...HEAD)
 
+### Added
+
+-   Use generic npm registry. [#44](https://github.com/atomist-skills/npm-build-skill/issues/44)
+
 ## [0.2.0](https://github.com/atomist-skills/npm-skill/compare/0.1.1...0.2.0) - 2020-09-25
 
 ### Added
