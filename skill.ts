@@ -33,7 +33,7 @@ export const Skill = skill<
 	resourceProviders: {
 		github: resourceProvider.gitHub({ minRequired: 1 }),
 		chat: resourceProvider.chat({ minRequired: 0 }),
-		npmjs: resourceProvider.npmJSRegistry({
+		npmjs: resourceProvider.npmRegistry({
 			minRequired: 0,
 			maxAllowed: 1,
 		}),
