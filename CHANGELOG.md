@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.2.1...HEAD)
 
+### Changed
+
+-   Update skill category. [23c227f](https://github.com/atomist-skills/npm-build-skill/commit/23c227f55f79de0235168c5668a528f63b3a5eed)
+
 ### Fixed
 
 -   Fix npmrc env variable name. [423a963](https://github.com/atomist-skills/npm-build-skill/commit/423a9630d15716968aec8cb0fa0ee2c39adf9dca)
