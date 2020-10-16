@@ -28,7 +28,7 @@ export const Skill = skill<
 	Configuration & { repos: any; subscription_filter: any }
 >({
 	displayName: "npm Build",
-	categories: [Category.Deploy],
+	categories: [Category.DevOps],
 
 	resourceProviders: {
 		github: resourceProvider.gitHub({ minRequired: 1 }),
