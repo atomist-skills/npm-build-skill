@@ -33,10 +33,10 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as pRetry from "p-retry";
 import * as path from "path";
+import * as semver from "semver";
 import { extractAnnotations } from "./annotation";
-import { gitBranchToNpmTag } from "./branch";
+import { cleanGitRef, gitRefToNpmTag, nextPrereleaseTag } from "./git";
 import { Configuration } from "./configuration";
-import { nextPrereleaseTag } from "./tag";
 
 interface NpmParameters {
 	project: project.Project;
@@ -360,31 +360,47 @@ const NpmVersionStep: NpmStep = {
 			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
 				?.after ||
 			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
-		const branch =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.branch ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
-		let pj = await fs.readJson(params.project.path("package.json"));
+		const branch = (ctx.data as subscription.types.OnPushSubscription)
+			.Push?.[0]?.branch;
+		const tag = (ctx.data as subscription.types.OnTagSubscription).Tag?.[0]
+			?.name;
 
+		let pj = await fs.readJson(params.project.path("package.json"));
 		const pjVersion =
 			pj.version ||
 			(await github.nextTag(params.project.id, "patch")) ||
 			"0.1.0";
 
-		const credential = await ctx.credential.resolve(
-			secret.gitHubAppToken({
-				owner: repo.owner,
-				repo: repo.name,
-				apiUrl: repo.org.provider.apiUrl,
-			}),
-		);
-		const octokit = github.api({
-			apiUrl: repo.org?.provider?.apiUrl,
-			credential,
-		});
-
 		let version: string;
-		if (!pj.scripts?.version) {
+		if (pj.scripts?.version) {
+			await params.project.spawn("npm", ["run", "version"], {
+				env: {
+					...process.env,
+					PATH: `${params.path}:${process.env.PATH}`,
+				},
+			});
+			pj = await fs.readJson(params.project.path("package.json"));
+			version = pj.version;
+		} else if (tag) {
+			const tagVersion = semver.valid(tag.replace(/^v/, ""));
+			if (tagVersion) {
+				version = tagVersion;
+			} else {
+				version = `${pjVersion}-${gitRefToNpmTag(tag, "gtag")}`;
+			}
+		} else {
+			const credential = await ctx.credential.resolve(
+				secret.gitHubAppToken({
+					owner: repo.owner,
+					repo: repo.name,
+					apiUrl: repo.org.provider.apiUrl,
+				}),
+			);
+			const octokit = github.api({
+				apiUrl: repo.org?.provider?.apiUrl,
+				credential,
+			});
+
 			version = await pRetry(
 				async () => {
 					const tags = await octokit.paginate(
@@ -401,14 +417,24 @@ const NpmVersionStep: NpmStep = {
 						nextReleaseVersion: pjVersion,
 						tags,
 					});
-					await params.project.exec("git", [
-						"tag",
-						"-a",
-						"-m",
-						`Version ${tag}`,
-						tag,
-					]);
-					await params.project.exec("git", ["push", "origin", tag]);
+					if (
+						!ctx.configuration?.parameters?.subscription_filter?.includes(
+							"onTag",
+						)
+					) {
+						await params.project.exec("git", [
+							"tag",
+							"-a",
+							"-m",
+							`Version ${tag}`,
+							tag,
+						]);
+						await params.project.exec("git", [
+							"push",
+							"origin",
+							tag,
+						]);
+					}
 					return tag;
 				},
 				{
@@ -418,15 +444,6 @@ const NpmVersionStep: NpmStep = {
 					randomize: true,
 				},
 			);
-		} else {
-			await params.project.spawn("npm", ["run", "version"], {
-				env: {
-					...process.env,
-					PATH: `${params.path}:${process.env.PATH}`,
-				},
-			});
-			pj = await fs.readJson(params.project.path("package.json"));
-			version = pj.version;
 		}
 
 		const result = await params.project.spawn(
@@ -462,14 +479,15 @@ const NpmPublishStep: NpmStep = {
 				?.repo ||
 			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
 				?.repo;
-		const branch =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.branch ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
+		const branch = (ctx.data as subscription.types.OnPushSubscription)
+			.Push?.[0]?.branch;
+		const tag = (ctx.data as subscription.types.OnTagSubscription).Tag?.[0]
+			?.name;
 		return (
 			ctx.configuration?.parameters.publish &&
 			ctx.configuration?.parameters.publish !== "no" &&
-			(ctx.configuration?.parameters.publish === "all" ||
+			(!!tag ||
+				(branch && ctx.configuration?.parameters.publish === "all") ||
 				branch === repo.defaultBranch)
 		);
 	},
@@ -484,10 +502,10 @@ const NpmPublishStep: NpmStep = {
 			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
 				?.after ||
 			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
-		const branch =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.branch ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
+		const branch = (ctx.data as subscription.types.OnPushSubscription)
+			.Push?.[0]?.branch;
+		const tag = (ctx.data as subscription.types.OnTagSubscription).Tag?.[0]
+			?.name;
 		const pj = await fs.readJson(params.project.path("package.json"));
 
 		// add /.npm/ to the .npmignore file
@@ -503,7 +521,15 @@ const NpmPublishStep: NpmStep = {
 		if (cfg.access) {
 			args.push("--access", cfg.access);
 		}
-		args.push("--tag", gitBranchToNpmTag(branch));
+		if (branch) {
+			args.push("--tag", gitRefToNpmTag(branch));
+		} else {
+			const tagVersion = semver.valid(tag.replace(/^v/, ""));
+			if (!tagVersion || tagVersion.includes("-")) {
+				args.push("--tag", cleanGitRef(tag));
+			}
+			// no tag for release versions, so latest gets applied by default
+		}
 
 		const check = await github.createCheck(ctx, params.project.id, {
 			sha: commit.sha,
@@ -575,7 +601,7 @@ Failed to publish ${pj.name}
 		}
 
 		const tags = cfg.tag || [];
-		if (branch === repo.defaultBranch) {
+		if (branch && branch === repo.defaultBranch) {
 			tags.push("next");
 		}
 		for (const tag of tags) {
