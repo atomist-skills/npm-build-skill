@@ -27,6 +27,7 @@ import { Configuration } from "./lib/configuration";
 export const Skill = skill<
 	Configuration & { repos: any; subscription_filter: any }
 >({
+	description: "Run npm scripts to compile or test your JavaScript project",
 	displayName: "npm Build",
 	categories: [Category.DevOps],
 
