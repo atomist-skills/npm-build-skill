@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.3.0...HEAD)
 
+### Fixed
+
+-   Improve handling of onTag configuration. [#53](https://github.com/atomist-skills/npm-build-skill/issues/53)
+
 ## [0.3.0](https://github.com/atomist-skills/npm-skill/compare/0.2.1...0.3.0) - 2020-10-16
 
 ### Changed
