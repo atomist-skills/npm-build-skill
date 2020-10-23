@@ -448,7 +448,12 @@ const NpmVersionStep: NpmStep = {
 
 		const result = await params.project.spawn(
 			"npm",
-			["version", "--no-git-tag-version", version],
+			[
+				"version",
+				"--allow-same-version",
+				"--no-git-tag-version",
+				version,
+			],
 			{
 				env: {
 					...process.env,
