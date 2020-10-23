@@ -15,9 +15,68 @@
  */
 
 import * as assert from "power-assert";
-import { nextPrereleaseTag } from "../lib/tag";
+import { cleanGitRef, gitRefToNpmTag, nextPrereleaseTag } from "../lib/git";
 
-describe("tag", () => {
+describe("git", () => {
+	describe("cleanGitRef", () => {
+		it("does nothing to clean ref", () => {
+			[
+				"",
+				"main",
+				"nothing",
+				"gh-pages",
+				"clean-branch-name",
+				"v1.2.3",
+				"3.2.1-main.0",
+			].forEach(b => {
+				const c = cleanGitRef(b);
+				assert(c === b);
+			});
+		});
+
+		it("cleans ref", () => {
+			[
+				{ r: "mainly@main", e: "mainlymain" },
+				{ r: "mainly_@_main", e: "mainly--main" },
+				{ r: "main/ly_@_main", e: "main-ly--main" },
+				{ r: "v1.2.3-main.@.0", e: "v1.2.3-main.0" },
+				{ r: "v1.2.3-main~vine.0", e: "v1.2.3-mainvine.0" },
+			].forEach(re => {
+				const c = cleanGitRef(re.r);
+				assert(c === re.e);
+			});
+		});
+	});
+
+	describe("gitRefToNpmTag", () => {
+		it("prepends branch to clean ref", () => {
+			["main", "nothing", "gh-pages", "clean-branch-name"].forEach(b => {
+				const c = gitRefToNpmTag(b);
+				const e = `branch-${b}`;
+				assert(c === e);
+			});
+		});
+
+		it("prepends provided prefix to clean ref", () => {
+			["main", "nothing", "gh-pages", "clean-branch-name"].forEach(b => {
+				const c = gitRefToNpmTag(b, "ref");
+				const e = `ref-${b}`;
+				assert(c === e);
+			});
+		});
+
+		it("cleans and prepends branch", () => {
+			[
+				{ b: "mainly@main", e: "branch-mainlymain" },
+				{ b: "mainly_@_main", e: "branch-mainly--main" },
+				{ b: "main/ly_@_main", e: "branch-main-ly--main" },
+			].forEach(be => {
+				const c = gitRefToNpmTag(be.b);
+				assert(c === be.e);
+			});
+		});
+	});
+
 	describe("nextPrereleaseTag", () => {
 		it("returns first prerelease when no tags", () => {
 			const n = nextPrereleaseTag({

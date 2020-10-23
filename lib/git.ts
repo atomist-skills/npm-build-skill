@@ -15,7 +15,23 @@
  */
 
 import * as semver from "semver";
-import { cleanGitBranch } from "./branch";
+
+/**
+ * Remove non-tag-worthy, non-semver-prerelease characters from git
+ * branch.
+ */
+export function cleanGitRef(refName: string): string {
+	return refName
+		.replace(/\//g, "-")
+		.replace(/_/g, "-")
+		.replace(/[^0-9A-Za-z.-]/g, "")
+		.replace(/\.+/g, ".");
+}
+
+/** Return cleaned name prepended with `prefix-`. */
+export function gitRefToNpmTag(branchName: string, prefix = "branch"): string {
+	return `${prefix}-${cleanGitRef(branchName)}`;
+}
 
 export interface NextPrereleaseTagArgs {
 	/** Current branch */
@@ -38,7 +54,7 @@ export function nextPrereleaseTag(args: NextPrereleaseTagArgs): string {
 		);
 	}
 	const semverTags = args.tags.filter(t => semver.valid(t));
-	const cleanBranch = cleanGitBranch(args.branch);
+	const cleanBranch = cleanGitRef(args.branch);
 	const prereleaseBranch =
 		args.branch === args.defaultBranch
 			? cleanBranch

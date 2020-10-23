@@ -22,4 +22,5 @@ export interface Configuration {
 	tag?: string[];
 	command?: string;
 	docker_cache?: string[];
+	subscription_filter: Array<"onPush" | "onTag">;
 }
