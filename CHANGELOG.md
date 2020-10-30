@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.3.1...HEAD)
 
-### Fixed
-
--   Skill fails on sandbox with file not found error. [#61](https://github.com/atomist-skills/npm-build-skill/issues/61)
-
 ## [0.3.1](https://github.com/atomist-skills/npm-skill/compare/0.3.0...0.3.1) - 2020-10-30
 
 ### Added
@@ -21,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Improve handling of onTag configuration. [#53](https://github.com/atomist-skills/npm-build-skill/issues/53)
 -   Allow setting same version. [4073096](https://github.com/atomist-skills/npm-build-skill/commit/407309640673fedcf20536da2d5ab4d02cd87d36)
+-   Skill fails on sandbox with file not found error. [#61](https://github.com/atomist-skills/npm-build-skill/issues/61)
 
 ## [0.3.0](https://github.com/atomist-skills/npm-skill/compare/0.2.1...0.3.0) - 2020-10-16
 
