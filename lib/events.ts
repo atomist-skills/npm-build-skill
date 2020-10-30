@@ -172,7 +172,7 @@ const SetupNodeStep: NpmStep = {
 		// Set up node version
 		let result = await params.project.spawn("bash", [
 			"-c",
-			`source $HOME/.nvm/nvm.sh && nvm install ${cfg.version}`,
+			`source /opt/.nvm/nvm.sh && nvm install ${cfg.version}`,
 		]);
 		if (result.status !== 0) {
 			await params.check.update({
@@ -188,13 +188,13 @@ const SetupNodeStep: NpmStep = {
 		// set the unsafe-prem config
 		await params.project.spawn("bash", [
 			"-c",
-			`source $HOME/.nvm/nvm.sh && npm config set unsafe-perm true`,
+			`source /opt/.nvm/nvm.sh && npm config set unsafe-perm true`,
 		]);
 
 		const captureLog = childProcess.captureLog();
 		result = await params.project.spawn(
 			"bash",
-			["-c", `source $HOME/.nvm/nvm.sh && nvm which ${cfg.version}`],
+			["-c", `source /opt/.nvm/nvm.sh && nvm which ${cfg.version}`],
 			{
 				log: captureLog,
 				logCommand: false,
