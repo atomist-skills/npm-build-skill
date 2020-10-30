@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.3.0...HEAD)
 
+### Added
+
+-   Add trigger option with support for tags. [#39](https://github.com/atomist-skills/npm-build-skill/issues/39)
+
 ### Fixed
 
 -   Improve handling of onTag configuration. [#53](https://github.com/atomist-skills/npm-build-skill/issues/53)
