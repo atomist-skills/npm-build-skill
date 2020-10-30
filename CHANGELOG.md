@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.3.1...HEAD)
 
+### Fixed
+
+-   Skill fails on sandbox with file not found error. [#61](https://github.com/atomist-skills/npm-build-skill/issues/61)
+
 ## [0.3.1](https://github.com/atomist-skills/npm-skill/compare/0.3.0...0.3.1) - 2020-10-30
 
 ### Added
