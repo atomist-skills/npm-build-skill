@@ -16,7 +16,7 @@
 
 export interface Configuration {
 	publish: string;
-	scripts: string[];
+	scripts?: string[];
 	version?: string;
 	access?: string;
 	tag?: string[];

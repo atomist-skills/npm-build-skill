@@ -143,13 +143,17 @@ const PrepareStep: NpmStep = {
 		}
 
 		// raise the check
+		const body =
+			ctx.configuration?.parameters?.scripts?.length > 0
+				? `Running \`npm run --if-present ${ctx.configuration?.parameters?.scripts?.join(
+						" ",
+				  )}\``
+				: `Running npm Build`;
 		params.check = await github.createCheck(ctx, params.project.id, {
 			sha: commit.sha,
 			title: "npm run",
 			name: `${ctx.skill.name}/${ctx.configuration?.name}/run`,
-			body: `Running \`npm run --if-present ${ctx.configuration?.parameters?.scripts.join(
-				" ",
-			)}\``,
+			body,
 		});
 
 		return status.success();
@@ -277,7 +281,7 @@ const NpmScriptsStep: NpmStep = {
 				?.after ||
 			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
 		const cfg = ctx.configuration?.parameters;
-		const scripts = cfg.scripts;
+		const scripts = cfg.scripts || [];
 
 		// Run scripts
 		for (const script of scripts) {

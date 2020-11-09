@@ -69,7 +69,7 @@ export const Skill = skill<
 			type: ParameterType.StringArray,
 			displayName: "npm scripts",
 			description: "Provide name of npm scripts to run in order",
-			required: true,
+			required: false,
 		},
 		version: {
 			type: ParameterType.String,
