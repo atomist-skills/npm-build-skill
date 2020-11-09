@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.3.1...HEAD)
 
+### Changed
+
+-   Make script & cache advanced parameters. [eb39b7d](https://github.com/atomist-skills/npm-build-skill/commit/eb39b7dddfeaf0eb51c4e4936e4e7eb81852b2b2)
+
 ## [0.3.1](https://github.com/atomist-skills/npm-skill/compare/0.3.0...0.3.1) - 2020-10-30
 
 ### Added
