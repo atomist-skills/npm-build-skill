@@ -19,6 +19,7 @@ import {
 	LineStyle,
 	parameter,
 	ParameterType,
+	ParameterVisibility,
 	resourceProvider,
 	skill,
 } from "@atomist/skill";
@@ -120,6 +121,7 @@ export const Skill = skill<
 				"Specify a shell command to be executed with `bash -c` on a Ubuntu-based environment to set up needed tools for your npm scripts",
 			lineStyle: LineStyle.Multiple,
 			required: false,
+			visibility: ParameterVisibility.Advanced,
 		},
 		docker_cache: {
 			type: ParameterType.StringArray,
@@ -127,6 +129,7 @@ export const Skill = skill<
 			description:
 				"Cache and restore file system content between executions of this skill",
 			required: false,
+			visibility: ParameterVisibility.Advanced,
 		},
 		repos: parameter.repoFilter(),
 	},
