@@ -35,7 +35,7 @@ import * as pRetry from "p-retry";
 import * as path from "path";
 import * as semver from "semver";
 import { extractAnnotations } from "./annotation";
-import { cleanGitRef, gitRefToNpmTag, nextPrereleaseTag } from "./git";
+import { gitRefToNpmTag, nextPrereleaseTag } from "./git";
 import { Configuration } from "./configuration";
 
 interface NpmParameters {
@@ -534,10 +534,15 @@ const NpmPublishStep: NpmStep = {
 			args.push("--tag", gitRefToNpmTag(branch));
 		} else {
 			const tagVersion = semver.valid(tag.replace(/^v/, ""));
-			if (!tagVersion || tagVersion.includes("-")) {
-				args.push("--tag", cleanGitRef(tag));
+			if (!tagVersion) {
+				args.push("--tag", gitRefToNpmTag(tag, "tag"));
+			} else if (tagVersion.includes("-")) {
+				// prerelease
+				args.push("--tag", "next");
+			} else {
+				// release
+				args.push("--tag", "latest");
 			}
-			// no tag for release versions, so latest gets applied by default
 		}
 
 		const check = await github.createCheck(ctx, params.project.id, {
