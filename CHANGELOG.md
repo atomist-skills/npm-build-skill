@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 -   Make script & cache advanced parameters. [eb39b7d](https://github.com/atomist-skills/npm-build-skill/commit/eb39b7dddfeaf0eb51c4e4936e4e7eb81852b2b2)
 -   Make npm scripts optional. [898591d](https://github.com/atomist-skills/npm-build-skill/commit/898591dd2618ac2e814ed31dd3d6d8a8df7cbf61)
 
+### Fixed
+
+-   Create next distribution tag for prereleases. [dabd1e1](https://github.com/atomist-skills/npm-build-skill/commit/dabd1e16c3b9a7b982fb8f41aeca3d42d82038f3)
+
 ## [0.3.1](https://github.com/atomist-skills/npm-skill/compare/0.3.0...0.3.1) - 2020-10-30
 
 ### Added
