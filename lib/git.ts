@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { subscription } from "@atomist/skill";
 import * as semver from "semver";
 
 /**
@@ -69,4 +70,50 @@ export function nextPrereleaseTag(args: NextPrereleaseTagArgs): string {
 		return `${nextVersion}-${prereleaseBranch}.0`;
 	}
 	return semver.inc(sortedTags[0], "prerelease");
+}
+
+export type EventSubscription =
+	| subscription.types.OnPushSubscription
+	| subscription.types.OnTagSubscription;
+
+/** Extract commit from event data. */
+export function eventCommit(
+	data: EventSubscription,
+): { sha?: string; url?: string } {
+	return (
+		(data as subscription.types.OnPushSubscription).Push?.[0]?.after ||
+		(data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
+	);
+}
+
+/** Extract repo from event data. */
+export function eventRepo(
+	data: EventSubscription,
+): {
+	channels?: Array<{ name?: string }>;
+	defaultBranch?: string;
+	name?: string;
+	owner?: string;
+	org?: { provider?: { apiUrl?: string } };
+} {
+	return (
+		(data as subscription.types.OnPushSubscription).Push?.[0]?.repo ||
+		(data as subscription.types.OnTagSubscription).Tag?.[0]?.commit?.repo
+	);
+}
+
+/**
+ * Extract branch from even data. Will be `undefined` for
+ * tag-triggered events.
+ */
+export function eventBranch(data: EventSubscription): string | undefined {
+	return (data as subscription.types.OnPushSubscription).Push?.[0]?.branch;
+}
+
+/**
+ * Extract branch from even data. Will be `undefined` for
+ * commit-triggered events.
+ */
+export function eventTag(data: EventSubscription): string | undefined {
+	return (data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
 }

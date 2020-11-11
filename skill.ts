@@ -76,7 +76,7 @@ export const Skill = skill<
 			type: ParameterType.String,
 			displayName: "Node.js version",
 			description:
-				"Version of Node.js to install (should be a valid [nvm alias or version](https://github.com/nvm-sh/nvm#usage)",
+				"Version of Node.js to install (should be a valid [nvm alias or version](https://github.com/nvm-sh/nvm#usage))",
 			required: false,
 		},
 		publish: {

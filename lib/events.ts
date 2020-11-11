@@ -35,8 +35,16 @@ import * as pRetry from "p-retry";
 import * as path from "path";
 import * as semver from "semver";
 import { extractAnnotations } from "./annotation";
-import { gitRefToNpmTag, nextPrereleaseTag } from "./git";
 import { Configuration } from "./configuration";
+import {
+	eventBranch,
+	eventCommit,
+	eventRepo,
+	eventTag,
+	gitRefToNpmTag,
+	nextPrereleaseTag,
+} from "./git";
+import { spawnFailure, statusReason } from "./status";
 
 interface NpmParameters {
 	project: project.Project;
@@ -57,11 +65,7 @@ type NpmStep = Step<
 const LoadProjectStep: NpmStep = {
 	name: "load",
 	run: async (ctx, params) => {
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
+		const repo = eventRepo(ctx.data);
 
 		const credential = await ctx.credential.resolve(
 			secret.gitHubAppToken({
@@ -94,6 +98,17 @@ const ValidateStep: NpmStep = {
 				.hidden()
 				.abort();
 		}
+
+		// raise the check
+		const commit = eventCommit(ctx.data);
+		params.check = await github.createCheck(ctx, params.project.id, {
+			sha: commit.sha,
+			title: "npm Build",
+			name: `${ctx.skill.name}/${ctx.configuration?.name}`,
+			body: "Running npm Build",
+		});
+		params.body = [];
+
 		return status.success();
 	},
 };
@@ -101,30 +116,33 @@ const ValidateStep: NpmStep = {
 const CommandStep: NpmStep = {
 	name: "command",
 	runWhen: async ctx => !!ctx.configuration?.parameters?.command,
-	run: async ctx => {
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
-		const commit =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.after ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+	run: async (ctx, params) => {
+		const repo = eventRepo(ctx.data);
+		const commit = eventCommit(ctx.data);
 		const result = await childProcess.spawnPromise(
 			"bash",
-			["-c", ctx.configuration?.parameters?.command],
-			{
-				log: childProcess.captureLog(),
-			},
+			["-c", ctx.configuration.parameters.command],
+			{ log: childProcess.captureLog() },
 		);
 		if (result.status !== 0) {
+			params.body.push(spawnFailure(result));
+			await params.check.update({
+				conclusion: "failure",
+				body: params.body.join("\n\n---\n\n"),
+			});
 			return status.failure(
-				`Failed to run command on [${repo.owner}/${
-					repo.name
-				}/${commit.sha.slice(0, 7)}](${commit.url})`,
+				statusReason({
+					reason: `\`${result.cmdString}\` failed`,
+					repo,
+					commit,
+				}),
 			);
 		}
+		params.body.push(`Setup command \`${result.cmdString}\` successful`);
+		await params.check.update({
+			conclusion: undefined,
+			body: params.body.join("\n\n---\n\n"),
+		});
 		return status.success();
 	},
 };
@@ -132,30 +150,28 @@ const CommandStep: NpmStep = {
 const PrepareStep: NpmStep = {
 	name: "prepare",
 	run: async (ctx, params) => {
-		const commit =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.after ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
 		// copy creds
 		const npmRc = path.join(os.homedir(), ".npmrc");
 		if (process.env.ATOMIST_NPMRC) {
-			await fs.copyFile(process.env.ATOMIST_NPMRC, npmRc);
+			try {
+				await fs.copyFile(process.env.ATOMIST_NPMRC, npmRc);
+			} catch (e) {
+				const repo = eventRepo(ctx.data);
+				const commit = eventCommit(ctx.data);
+				const reason = `Failed to copy '${process.env.ATOMIST_NPMRC}' to '${npmRc}'`;
+				params.body.push(`${reason}:\n${e.message}`);
+				await params.check.update({
+					conclusion: "failure",
+					body: params.body.join("\n\n---\n\n"),
+				});
+				return status.failure(statusReason({ reason, repo, commit }));
+			}
+			params.body.push(`Created \`${npmRc}\``);
 		}
-
-		// raise the check
-		const body =
-			ctx.configuration?.parameters?.scripts?.length > 0
-				? `Running \`npm run --if-present ${ctx.configuration?.parameters?.scripts?.join(
-						" ",
-				  )}\``
-				: `Running npm Build`;
-		params.check = await github.createCheck(ctx, params.project.id, {
-			sha: commit.sha,
-			title: "npm run",
-			name: `${ctx.skill.name}/${ctx.configuration?.name}/run`,
-			body,
+		await params.check.update({
+			conclusion: undefined,
+			body: params.body.join("\n\n---\n\n"),
 		});
-
 		return status.success();
 	},
 };
@@ -163,42 +179,38 @@ const PrepareStep: NpmStep = {
 const SetupNodeStep: NpmStep = {
 	name: "setup node",
 	run: async (ctx, params) => {
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
-		const commit =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.after ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+		const repo = eventRepo(ctx.data);
+		const commit = eventCommit(ctx.data);
 		const cfg = ctx.configuration?.parameters;
 		// Set up node version
 		let result = await params.project.spawn("bash", [
 			"-c",
-			`source /opt/.nvm/nvm.sh && nvm install ${cfg.version}`,
+			`. /opt/.nvm/nvm.sh && nvm install ${cfg.version}`,
 		]);
 		if (result.status !== 0) {
+			params.body.push(spawnFailure(result));
 			await params.check.update({
 				conclusion: "failure",
-				body: "`nvm install` failed",
+				body: params.body.join("\n\n---\n\n"),
 			});
 			return status.failure(
-				`\`nvm install\` failed on [${repo.owner}/${
-					repo.name
-				}/${commit.sha.slice(0, 7)}](${commit.url})`,
+				statusReason({
+					reason: `\`${result.cmdString}\` failed`,
+					repo,
+					commit,
+				}),
 			);
 		}
 		// set the unsafe-prem config
 		await params.project.spawn("bash", [
 			"-c",
-			`source /opt/.nvm/nvm.sh && npm config set unsafe-perm true`,
+			`. /opt/.nvm/nvm.sh && npm config set unsafe-perm true`,
 		]);
 
 		const captureLog = childProcess.captureLog();
 		result = await params.project.spawn(
 			"bash",
-			["-c", `source /opt/.nvm/nvm.sh && nvm which ${cfg.version}`],
+			["-c", `. /opt/.nvm/nvm.sh && nvm which ${cfg.version}`],
 			{
 				log: captureLog,
 				logCommand: false,
@@ -206,16 +218,24 @@ const SetupNodeStep: NpmStep = {
 		);
 		params.path = path.dirname(captureLog.log.trim());
 		if (result.status !== 0) {
+			params.body.push(spawnFailure(result));
 			await params.check.update({
 				conclusion: "failure",
-				body: "`nvm which` failed",
+				body: params.body.join("\n\n---\n\n"),
 			});
 			return status.failure(
-				`\`nvm which\` failed on [${repo.owner}/${
-					repo.name
-				}/${commit.sha.slice(0, 7)}](${commit.url})`,
+				statusReason({
+					reason: `\`${result.cmdString}\` failed`,
+					repo,
+					commit,
+				}),
 			);
 		}
+		params.body.push(`Installed Node.js version ${cfg.version}`);
+		await params.check.update({
+			conclusion: undefined,
+			body: params.body.join("\n\n---\n\n"),
+		});
 		return status.success();
 	},
 };
@@ -223,15 +243,8 @@ const SetupNodeStep: NpmStep = {
 const NpmInstallStep: NpmStep = {
 	name: "npm install",
 	run: async (ctx, params) => {
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
-		const commit =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.after ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+		const repo = eventRepo(ctx.data);
+		const commit = eventCommit(ctx.data);
 		const opts = {
 			env: {
 				...process.env,
@@ -254,16 +267,24 @@ const NpmInstallStep: NpmStep = {
 			);
 		}
 		if (result.status !== 0) {
+			params.body.push(spawnFailure(result));
 			await params.check.update({
 				conclusion: "failure",
-				body: "`npm install` failed",
+				body: params.body.join("\n\n---\n\n"),
 			});
 			return status.failure(
-				`\`npm install\` failed on [${repo.owner}/${
-					repo.name
-				}/${commit.sha.slice(0, 7)}](${commit.url})`,
+				statusReason({
+					reason: `\`${result.cmdString}\` failed`,
+					repo,
+					commit,
+				}),
 			);
 		}
+		params.body.push("Installed npm dependencies");
+		await params.check.update({
+			conclusion: undefined,
+			body: params.body.join("\n\n---\n\n"),
+		});
 		return status.success();
 	},
 };
@@ -271,15 +292,8 @@ const NpmInstallStep: NpmStep = {
 const NpmScriptsStep: NpmStep = {
 	name: "npm run",
 	run: async (ctx, params) => {
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
-		const commit =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.after ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
+		const repo = eventRepo(ctx.data);
+		const commit = eventCommit(ctx.data);
 		const cfg = ctx.configuration?.parameters;
 		const scripts = cfg.scripts || [];
 
@@ -301,17 +315,11 @@ const NpmScriptsStep: NpmStep = {
 			const annotations = extractAnnotations(captureLog.log);
 			if (result.status !== 0 || annotations.length > 0) {
 				const home = process.env.ATOMIST_HOME || "/atm/home";
+				result.stderr = captureLog.log;
+				params.body.push(spawnFailure(result));
 				await params.check.update({
 					conclusion: "failure",
-					body: `${
-						params.body.length > 0
-							? `${params.body.join("\n\n---\n\n")}\n\n---\n\n`
-							: ""
-					}Running \`npm run --if-present ${script}\` errored:
-
-\`\`\`
-${captureLog.log.trim()}
-\`\`\``,
+					body: params.body.join("\n\n--\n\n"),
 					annotations: annotations.map(r => ({
 						annotationLevel: r.severity,
 						path: r.path.replace(home + "/", ""),
@@ -323,29 +331,21 @@ ${captureLog.log.trim()}
 					})),
 				});
 				return status.failure(
-					`\`npm run ${script}\` failed on [${repo.owner}/${
-						repo.name
-					}/${commit.sha.slice(0, 7)}](${commit.url})`,
+					statusReason({
+						reason: `\`${result.cmdString}\` failed`,
+						commit,
+						repo,
+					}),
 				);
 			} else {
-				params.body.push(
-					`Running \`npm run --if-present ${script}\` completed successfully`,
-				);
+				params.body.push(`npm script  \`${script}\` successful`);
 				await params.check.update({
 					conclusion: undefined,
 					body: params.body.join("\n\n---\n\n"),
 				});
 			}
 		}
-		await params.check.update({
-			conclusion: "success",
-			body: params.body.join("\n\n---\n\n"),
-		});
-		return status.success(
-			`\`npm run ${scripts.join(" ")}\` passed on [${repo.owner}/${
-				repo.name
-			}/${commit.sha.slice(0, 7)}](${commit.url})`,
-		);
+		return status.success();
 	},
 };
 
@@ -355,19 +355,10 @@ const NpmVersionStep: NpmStep = {
 		ctx.configuration?.parameters.publish &&
 		ctx.configuration?.parameters.publish !== "no",
 	run: async (ctx, params) => {
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
-		const commit =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.after ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
-		const branch = (ctx.data as subscription.types.OnPushSubscription)
-			.Push?.[0]?.branch;
-		const tag = (ctx.data as subscription.types.OnTagSubscription).Tag?.[0]
-			?.name;
+		const repo = eventRepo(ctx.data);
+		const commit = eventCommit(ctx.data);
+		const branch = eventBranch(ctx.data);
+		const tag = eventTag(ctx.data);
 
 		let pj = await fs.readJson(params.project.path("package.json"));
 		const pjVersion =
@@ -405,49 +396,76 @@ const NpmVersionStep: NpmStep = {
 				credential,
 			});
 
-			version = await pRetry(
-				async () => {
-					const tags = await octokit.paginate(
-						"GET /repos/:owner/:repo/tags",
-						{
-							owner: repo.owner,
-							repo: repo.name,
-						},
-						response => response.data.map(t => t.name),
-					);
-					const tag = nextPrereleaseTag({
-						branch,
-						defaultBranch: repo.defaultBranch,
-						nextReleaseVersion: pjVersion,
-						tags,
-					});
-					if (
-						!ctx.configuration?.parameters?.subscription_filter?.includes(
-							"onTag",
-						)
-					) {
-						await params.project.exec("git", [
-							"tag",
-							"-a",
-							"-m",
-							`Version ${tag}`,
-							tag,
-						]);
-						await params.project.exec("git", [
-							"push",
-							"origin",
-							tag,
-						]);
-					}
-					return tag;
-				},
-				{
-					retries: 5,
-					maxTimeout: 2500,
-					minTimeout: 1000,
-					randomize: true,
-				},
-			);
+			try {
+				version = await pRetry(
+					async () => {
+						let tags: string[] = [];
+						try {
+							tags = await octokit.paginate(
+								"GET /repos/:owner/:repo/tags",
+								{
+									owner: repo.owner,
+									repo: repo.name,
+								},
+								response => response.data.map(t => t.name),
+							);
+						} catch (e) {
+							e.message = `Failed to list tags for ${repo.owner}/${repo.name}: ${e.message}`;
+							throw e;
+						}
+						const tag = nextPrereleaseTag({
+							branch,
+							defaultBranch: repo.defaultBranch,
+							nextReleaseVersion: pjVersion,
+							tags,
+						});
+						if (
+							!ctx.configuration?.parameters?.subscription_filter?.includes(
+								"onTag",
+							)
+						) {
+							try {
+								await params.project.exec("git", [
+									"tag",
+									"-a",
+									"-m",
+									`Version ${tag}`,
+									tag,
+								]);
+							} catch (e) {
+								e.message = `Failed to create git tag ${tag}: ${e.message}`;
+								throw e;
+							}
+							try {
+								await params.project.exec("git", [
+									"push",
+									"origin",
+									tag,
+								]);
+							} catch (e) {
+								e.message = `Failed to push tag ${tag}: ${e.message}`;
+								throw e;
+							}
+						}
+						return tag;
+					},
+					{
+						retries: 5,
+						maxTimeout: 2500,
+						minTimeout: 1000,
+						randomize: true,
+					},
+				);
+			} catch (e) {
+				params.body.push(e.message);
+				await params.check.update({
+					conclusion: "failure",
+					body: params.body.join("\n\n---\n\n"),
+				});
+				return status.failure(
+					statusReason({ reason: e.message, commit, repo }),
+				);
+			}
 		}
 
 		const result = await params.project.spawn(
@@ -466,16 +484,24 @@ const NpmVersionStep: NpmStep = {
 			},
 		);
 		if (result.status !== 0) {
+			params.body.push(spawnFailure(result));
 			await params.check.update({
 				conclusion: "failure",
-				body: "`npm version` failed",
+				body: params.body.join("\n\n---\n\n"),
 			});
 			return status.failure(
-				`\`npm version\` failed on [${repo.owner}/${
-					repo.name
-				}/${commit.sha.slice(0, 7)}](${commit.url})`,
+				statusReason({
+					reason: `\`${result.cmdString}\` failed`,
+					commit,
+					repo,
+				}),
 			);
 		}
+		params.body.push(`Set package version to \`${version}\``);
+		await params.check.update({
+			conclusion: undefined,
+			body: params.body.join("\n\n---\n\n"),
+		});
 		return status.success();
 	},
 };
@@ -483,15 +509,9 @@ const NpmVersionStep: NpmStep = {
 const NpmPublishStep: NpmStep = {
 	name: "npm publish",
 	runWhen: async ctx => {
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
-		const branch = (ctx.data as subscription.types.OnPushSubscription)
-			.Push?.[0]?.branch;
-		const tag = (ctx.data as subscription.types.OnTagSubscription).Tag?.[0]
-			?.name;
+		const repo = eventRepo(ctx.data);
+		const branch = eventBranch(ctx.data);
+		const tag = eventTag(ctx.data);
 		return (
 			ctx.configuration?.parameters.publish &&
 			ctx.configuration?.parameters.publish !== "no" &&
@@ -502,103 +522,78 @@ const NpmPublishStep: NpmStep = {
 	},
 	run: async (ctx, params) => {
 		const cfg = ctx.configuration?.parameters;
-		const repo =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.repo ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-				?.repo;
-		const commit =
-			(ctx.data as subscription.types.OnPushSubscription).Push?.[0]
-				?.after ||
-			(ctx.data as subscription.types.OnTagSubscription).Tag?.[0]?.commit;
-		const branch = (ctx.data as subscription.types.OnPushSubscription)
-			.Push?.[0]?.branch;
-		const tag = (ctx.data as subscription.types.OnTagSubscription).Tag?.[0]
-			?.name;
-		const pj = await fs.readJson(params.project.path("package.json"));
+		const repo = eventRepo(ctx.data);
+		const commit = eventCommit(ctx.data);
+		const branch = eventBranch(ctx.data);
+		const tag = eventTag(ctx.data);
+		if (
+			ctx.configuration?.parameters.publish &&
+			ctx.configuration?.parameters.publish !== "no" &&
+			(!!tag ||
+				(branch && ctx.configuration?.parameters.publish === "all") ||
+				branch === repo.defaultBranch)
+		) {
+			const pj = await fs.readJson(params.project.path("package.json"));
 
-		// add /.npm/ to the .npmignore file
-		const npmIgnore = params.project.path(".npmignore");
-		if (await fs.pathExists(npmIgnore)) {
-			const npmIgnoreContent = await fs.readFile(npmIgnore, "utf8");
-			await fs.writeFile(npmIgnore, `${npmIgnoreContent}\n/.npm/`);
-		} else {
-			await fs.writeFile(npmIgnore, "/.npm/");
-		}
-
-		const args = [];
-		if (cfg.access) {
-			args.push("--access", cfg.access);
-		}
-		if (branch) {
-			args.push("--tag", gitRefToNpmTag(branch));
-		} else {
-			const tagVersion = semver.valid(tag.replace(/^v/, ""));
-			if (!tagVersion) {
-				args.push("--tag", gitRefToNpmTag(tag, "tag"));
-			} else if (tagVersion.includes("-")) {
-				// prerelease
-				args.push("--tag", "next");
-			} else {
-				// release
-				args.push("--tag", "latest");
+			// add /.npm/ to the .npmignore file
+			const npmIgnore = params.project.path(".npmignore");
+			try {
+				if (await fs.pathExists(npmIgnore)) {
+					const npmIgnoreContent = await fs.readFile(
+						npmIgnore,
+						"utf8",
+					);
+					await fs.writeFile(
+						npmIgnore,
+						`${npmIgnoreContent}\n/.npm/`,
+					);
+				} else {
+					await fs.writeFile(npmIgnore, "/.npm/");
+				}
+			} catch (e) {
+				const reason = `Failed to update .npmignore: ${e.message}`;
+				params.body.push(reason);
+				await params.check.update({
+					conclusion: "failure",
+					body: params.body.join("\n\n---\n\n"),
+				});
+				return status.failure(statusReason({ reason, commit, repo }));
 			}
-		}
 
-		const check = await github.createCheck(ctx, params.project.id, {
-			sha: commit.sha,
-			title: "npm publish",
-			name: `${ctx.skill.name}/${ctx.configuration?.name}/publish`,
-			body: `Running \`npm publish ${args.join(" ")}\``,
-		});
-		const id = guid();
-		const channels = repo?.channels?.map(c => c.name);
-		const header = `*${repo.owner}/${repo.name}/${branch}* at <${
-			commit.url
-		}|\`${commit.sha.slice(0, 7)}\`>\n`;
-		await ctx.message.send(
-			slack.progressMessage(
-				"npm publish",
-				`${header}
-\`\`\`
-Publishing ${pj.name}
-\`\`\``,
-				{
-					counter: false,
-					state: "in_process",
-					count: 0,
-					total: 1,
-				},
-				ctx,
-			),
-			{ channels },
-			{ id },
-		);
+			const args = [];
+			if (cfg.access) {
+				args.push("--access", cfg.access);
+			}
+			if (branch) {
+				args.push("--tag", gitRefToNpmTag(branch));
+			} else {
+				const tagVersion = semver.valid(tag.replace(/^v/, ""));
+				if (!tagVersion) {
+					args.push("--tag", gitRefToNpmTag(tag, "tag"));
+				} else if (tagVersion.includes("-")) {
+					// prerelease
+					args.push("--tag", "next");
+				} else {
+					// release
+					args.push("--tag", "latest");
+				}
+			}
 
-		const captureLog = childProcess.captureLog();
-		const result = await params.project.spawn("npm", ["publish", ...args], {
-			env: { ...process.env, PATH: `${params.path}:${process.env.PATH}` },
-			log: captureLog,
-			logCommand: false,
-		});
-		if (result.status !== 0) {
-			await check.update({
-				conclusion: "failure",
-				body: `Running \`npm publish ${args.join(" ")}\` errored:
-\`\`\`
-${captureLog.log.trim()}
-\`\`\``,
-			});
+			const id = guid();
+			const channels = repo?.channels?.map(c => c.name);
+			const header = `*${repo.owner}/${repo.name}#${branch || tag}* at <${
+				commit.url
+			}|\`${commit.sha.slice(0, 7)}\`>\n`;
 			await ctx.message.send(
 				slack.progressMessage(
 					"npm publish",
 					`${header}
 \`\`\`
-Failed to publish ${pj.name}
+Publishing ${pj.name}
 \`\`\``,
 					{
 						counter: false,
-						state: "failure",
+						state: "in_process",
 						count: 0,
 						total: 1,
 					},
@@ -607,21 +602,10 @@ Failed to publish ${pj.name}
 				{ channels },
 				{ id },
 			);
-			return status.failure(
-				`\`npm publish ${args.join(" ")}\` failed on [${repo.owner}/${
-					repo.name
-				}/${commit.sha.slice(0, 7)}](${commit.url})`,
-			);
-		}
 
-		const tags = cfg.tag || [];
-		if (branch && branch === repo.defaultBranch) {
-			tags.push("next");
-		}
-		for (const tag of tags) {
-			await params.project.spawn(
+			const result = await params.project.spawn(
 				"npm",
-				["dist-tag", "add", `${pj.name}@${pj.version}`, tag],
+				["publish", ...args],
 				{
 					env: {
 						...process.env,
@@ -629,39 +613,143 @@ Failed to publish ${pj.name}
 					},
 				},
 			);
-		}
-
-		await check.update({
-			conclusion: "success",
-			body: `Running \`npm publish ${args.join(
-				" ",
-			)}\` completed successfully:
+			if (result.status !== 0) {
+				params.body.push(spawnFailure(result));
+				await params.check.update({
+					conclusion: "failure",
+					body: params.body.join("\n\n---\n\n"),
+				});
+				await ctx.message.send(
+					slack.progressMessage(
+						"npm publish",
+						`${header}
 \`\`\`
-${captureLog.log.trim()}
+Failed to publish ${pj.name}
 \`\`\``,
-		});
-		await ctx.message.send(
-			slack.progressMessage(
-				"npm publish",
-				`${header}
+						{
+							counter: false,
+							state: "failure",
+							count: 0,
+							total: 1,
+						},
+						ctx,
+					),
+					{ channels },
+					{ id },
+				);
+				return status.failure(
+					statusReason({
+						reason: `\`${result.cmdString}\` failed`,
+						commit,
+						repo,
+					}),
+				);
+			}
+
+			const tags = cfg.tag || [];
+			if (
+				branch &&
+				branch === repo.defaultBranch &&
+				!tags.includes("next")
+			) {
+				tags.push("next");
+			}
+			const tagErrors: Array<{
+				cmdString: string;
+				stdout: string;
+				stderr: string;
+			}> = [];
+			for (const tag of tags) {
+				const tagResult = await params.project.spawn(
+					"npm",
+					["dist-tag", "add", `${pj.name}@${pj.version}`, tag],
+					{
+						env: {
+							...process.env,
+							PATH: `${params.path}:${process.env.PATH}`,
+						},
+					},
+				);
+				if (tagResult.status !== 0) {
+					tagErrors.push(tagResult);
+				}
+			}
+			if (tagErrors.length > 0) {
+				params.body.push(
+					`Failed to create tags:\n\n` +
+						"```\n" +
+						tagErrors
+							.map(
+								e =>
+									`$ ${e.cmdString}\n` +
+									`${(e.stderr || e.stdout || "").trim()}`,
+							)
+							.join("\n") +
+						"\n```\n",
+				);
+				await params.check.update({
+					conclusion: "failure",
+					body: params.body.join("\n\n---\n\n"),
+				});
+				await ctx.message.send(
+					slack.progressMessage(
+						"npm publish",
+						`${header}
+\`\`\`
+Failed to create all tags for ${pj.name}
+\`\`\``,
+						{
+							counter: false,
+							state: "failure",
+							count: 0,
+							total: 1,
+						},
+						ctx,
+					),
+					{ channels },
+					{ id },
+				);
+				return status.failure(
+					statusReason({
+						reason: `\`${tagErrors
+							.map(e => e.cmdString)
+							.join(" && ")}\` failed`,
+						commit,
+						repo,
+					}),
+				);
+			}
+
+			await ctx.message.send(
+				slack.progressMessage(
+					"npm publish",
+					`${header}
 \`\`\`
 Successfully published ${pj.name} with version ${pj.version}
 \`\`\``,
-				{
-					counter: false,
-					state: "success",
-					count: 1,
-					total: 1,
-				},
-				ctx,
-			),
-			{ channels },
-			{ id },
-		);
+					{
+						counter: false,
+						state: "success",
+						count: 1,
+						total: 1,
+					},
+					ctx,
+				),
+				{ channels },
+				{ id },
+			);
+			params.body.push(`Published npm package`);
+		}
+		await params.check.update({
+			conclusion: "success",
+			body: params.body.join("\n\n---\n\n"),
+		});
 		return status.success(
-			`\`npm publish ${args.join(" ")}\` passed on [${repo.owner}/${
-				repo.name
-			}/${commit.sha.slice(0, 7)}](${commit.url})`,
+			statusReason({
+				reason: `npm Build of ${repo.owner}/${repo.name} succeeded`,
+				commit,
+				repo,
+			}),
 		);
 	},
 };
