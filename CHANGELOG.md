@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.3.2...HEAD)
 
+### Changed
+
+-   Add description to npm registry provider. [13091f1](https://github.com/atomist-skills/npm-build-skill/commit/13091f10f301d28ce642791ea775bf46632de1c5)
+
 ## [0.3.2](https://github.com/atomist-skills/npm-skill/compare/0.3.1...0.3.2) - 2020-11-10
 
 ### Changed
