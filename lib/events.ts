@@ -19,12 +19,10 @@ import {
 	EventContext,
 	EventHandler,
 	github,
-	guid,
 	project,
 	repository,
 	runSteps,
 	secret,
-	slack,
 	status,
 	Step,
 	subscription,
@@ -579,30 +577,6 @@ const NpmPublishStep: NpmStep = {
 				}
 			}
 
-			const id = guid();
-			const channels = repo?.channels?.map(c => c.name);
-			const header = `*${repo.owner}/${repo.name}#${branch || tag}* at <${
-				commit.url
-			}|\`${commit.sha.slice(0, 7)}\`>\n`;
-			await ctx.message.send(
-				slack.progressMessage(
-					"npm publish",
-					`${header}
-\`\`\`
-Publishing ${pj.name}
-\`\`\``,
-					{
-						counter: false,
-						state: "in_process",
-						count: 0,
-						total: 1,
-					},
-					ctx,
-				),
-				{ channels },
-				{ id },
-			);
-
 			const result = await params.project.spawn(
 				"npm",
 				["publish", ...args],
@@ -619,24 +593,6 @@ Publishing ${pj.name}
 					conclusion: "failure",
 					body: params.body.join("\n\n---\n\n"),
 				});
-				await ctx.message.send(
-					slack.progressMessage(
-						"npm publish",
-						`${header}
-\`\`\`
-Failed to publish ${pj.name}
-\`\`\``,
-						{
-							counter: false,
-							state: "failure",
-							count: 0,
-							total: 1,
-						},
-						ctx,
-					),
-					{ channels },
-					{ id },
-				);
 				return status.failure(
 					statusReason({
 						reason: `\`${result.cmdString}\` failed`,
@@ -691,24 +647,6 @@ Failed to publish ${pj.name}
 					conclusion: "failure",
 					body: params.body.join("\n\n---\n\n"),
 				});
-				await ctx.message.send(
-					slack.progressMessage(
-						"npm publish",
-						`${header}
-\`\`\`
-Failed to create all tags for ${pj.name}
-\`\`\``,
-						{
-							counter: false,
-							state: "failure",
-							count: 0,
-							total: 1,
-						},
-						ctx,
-					),
-					{ channels },
-					{ id },
-				);
 				return status.failure(
 					statusReason({
 						reason: `\`${tagErrors
@@ -719,25 +657,6 @@ Failed to create all tags for ${pj.name}
 					}),
 				);
 			}
-
-			await ctx.message.send(
-				slack.progressMessage(
-					"npm publish",
-					`${header}
-\`\`\`
-Successfully published ${pj.name} with version ${pj.version}
-\`\`\``,
-					{
-						counter: false,
-						state: "success",
-						count: 1,
-						total: 1,
-					},
-					ctx,
-				),
-				{ channels },
-				{ id },
-			);
 			params.body.push(`Published npm package`);
 		}
 		await params.check.update({

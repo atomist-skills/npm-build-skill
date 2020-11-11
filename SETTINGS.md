@@ -2,18 +2,10 @@
 
 Connect and configure these integrations:
 
-1.  [**GitHub**][github] _(required)_
-2.  [**npm Registry**][npm] _(optional)_
-3.  [**Slack**][slack] or [**Microsoft Teams**][msteams] _(optional)_
-
-[github]: https://go.atomist.com/catalog/integration/github "GitHub Integration"
-[npm]:
-    https://go.atomist.com/catalog/integration/npmjs-registry
-    "npm Registry Integration"
-[slack]: https://go.atomist.com/catalog/integration/slack "Slack Integration"
-[msteams]:
-    https://go.atomist.com/catalog/integration/microsoft-teams
-    "Microsoft Teams Integration"
+1.  [**GitHub**](https://go.atomist.com/catalog/integration/github "GitHub Integration")
+    _(required)_
+1.  [**npm Registry**](https://go.atomist.com/catalog/integration/npmjs-registry "npm Registry Integration")
+    _(optional)_
 
 ## How to configure
 
@@ -25,14 +17,14 @@ Connect and configure these integrations:
     not already configured an npm registry, only your GitHub organizations, via
     the GitHub Packages npm registry, will appear in the list.
 
-2.  **Triggers**
+1.  **Triggers**
 
     ![Event triggers for skill](docs/images/trigger.png)
 
     Select the events that will trigger execution of the skill. You can select
     GitHub pushes, GitHub tags, or both.
 
-3.  **npm scripts to run**
+1.  **npm scripts to run**
 
     ![npm scripts to run](docs/images/scripts.png)
 
@@ -45,14 +37,14 @@ Connect and configure these integrations:
     `npm run --if-present SCRIPT`, so it is safe to include scripts that are
     only present in some of your packages.
 
-4.  **Node.js version**
+1.  **Node.js version**
 
     ![Node.js version](docs/images/node-version.png)
 
     Provide a valid Node.js version or alias as used by
     [nvm](https://github.com/nvm-sh/nvm#usage), e.g., `12.3.1` or `14`.
 
-5.  **Publish package**
+1.  **Publish package**
 
     ![Publish package](docs/images/publish.png)
 
@@ -62,14 +54,14 @@ Connect and configure these integrations:
 
     _You must have an npm registry configured to publish packages._
 
-6.  **Package access**
+1.  **Package access**
 
     ![Package access](docs/images/access.png)
 
     `npm publish` allows to publish packages with `public` or `restricted`
     access.
 
-7.  **Create additional npm distribution tags**
+1.  **Create additional npm distribution tags**
 
     ![Package dist tags](docs/images/tags.png)
 
@@ -80,7 +72,7 @@ Connect and configure these integrations:
     [semantic version][semver], the `latest` tag is added, making the published
     version the new default.
 
-8.  **Specify an optional bash command**
+1.  **Specify an optional bash command**
 
     ![Shell command](docs/images/shell-command.png)
 
@@ -103,7 +95,7 @@ Connect and configure these integrations:
         && mongod --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork
     ```
 
-9.  **Enable file caching for faster execution times**
+1.  **Enable file caching for faster execution times**
 
     ![Skill file caching](docs/images/cache.png)
 
@@ -116,7 +108,7 @@ Connect and configure these integrations:
     Caching the npm dependency cache could be accomplished with the pattern
     `.npm/**/*`.
 
-10. **Determine repository scope**
+1.  **Determine repository scope**
 
     ![Repository filter](docs/images/repo-filter.png)
 
@@ -126,7 +118,7 @@ Connect and configure these integrations:
     To restrict the organizations or specific repositories on which the skill
     will run, you can explicitly choose organization(s) and repositories.
 
-11. **Activate the skill**
+1.  **Activate the skill**
 
     Save your configuration and activate the skill by clicking the "Enable
     skill" button.
