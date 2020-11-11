@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Standardize status messages. [#70](https://github.com/atomist-skills/npm-build-skill/issues/70)
 
+### Removed
+
+-   Remove chat integration. [#71](https://github.com/atomist-skills/npm-build-skill/issues/71)
+
 ## [0.3.3](https://github.com/atomist-skills/npm-skill/compare/0.3.2...0.3.3) - 2020-11-11
 
 ### Changed
