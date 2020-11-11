@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/0.3.3...HEAD)
 
+### Changed
+
+-   Standardize status messages. [#70](https://github.com/atomist-skills/npm-build-skill/issues/70)
+
 ## [0.3.3](https://github.com/atomist-skills/npm-skill/compare/0.3.2...0.3.3) - 2020-11-11
 
 ### Changed
