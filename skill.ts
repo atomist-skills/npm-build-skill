@@ -38,6 +38,7 @@ export const Skill = skill<
 		npmjs: resourceProvider.npmRegistry({
 			minRequired: 0,
 			maxAllowed: 1,
+			description: "npm registry to publish the package to",
 		}),
 	},
 
