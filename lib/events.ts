@@ -229,7 +229,7 @@ const SetupNodeStep: NpmStep = {
 				}),
 			);
 		}
-		params.body.push(`Installed Node.js version ${cfg.version}`);
+		params.body.push(`Installed Node.js version \`${cfg.version}\``);
 		await params.check.update({
 			conclusion: undefined,
 			body: params.body.join("\n\n---\n\n"),
