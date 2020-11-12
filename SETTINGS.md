@@ -116,7 +116,7 @@ Connect and configure these integrations:
     organizations you have connected.
 
     To restrict the organizations or specific repositories on which the skill
-    will run, you can explicitly choose organization(s) and repositories.
+    will run, you can explicitly choose organizations and repositories.
 
 1.  **Activate the skill**
 
