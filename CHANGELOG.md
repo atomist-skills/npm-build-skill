@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Remove chat integration. [#71](https://github.com/atomist-skills/npm-build-skill/issues/71)
 
+### Fixed
+
+-   Set check to success without publish. [5f26d51](https://github.com/atomist-skills/npm-build-skill/commit/5f26d5120e355f69e1d3cb86861e1133e732d684)
+
 ## [0.3.3](https://github.com/atomist-skills/npm-skill/compare/0.3.2...0.3.3) - 2020-11-11
 
 ### Changed
