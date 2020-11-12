@@ -343,7 +343,13 @@ const NpmScriptsStep: NpmStep = {
 				});
 			}
 		}
-		return status.success();
+		return status.success(
+			statusReason({
+				reason: `npm Build of ${repo.owner}/${repo.name} succeeded`,
+				commit,
+				repo,
+			}),
+		);
 	},
 };
 
@@ -511,62 +517,80 @@ const NpmPublishStep: NpmStep = {
 		const commit = eventCommit(ctx.data);
 		const branch = eventBranch(ctx.data);
 		const tag = eventTag(ctx.data);
-		if (
-			ctx.configuration?.parameters.publish &&
-			ctx.configuration?.parameters.publish !== "no" &&
-			(!!tag ||
-				(branch && ctx.configuration?.parameters.publish === "all") ||
-				branch === repo.defaultBranch)
-		) {
-			const pj = await fs.readJson(params.project.path("package.json"));
+		const pj = await fs.readJson(params.project.path("package.json"));
 
-			// add /.npm/ to the .npmignore file
-			const npmIgnore = params.project.path(".npmignore");
-			try {
-				if (await fs.pathExists(npmIgnore)) {
-					const npmIgnoreContent = await fs.readFile(
-						npmIgnore,
-						"utf8",
-					);
-					await fs.writeFile(
-						npmIgnore,
-						`${npmIgnoreContent}\n/.npm/`,
-					);
-				} else {
-					await fs.writeFile(npmIgnore, "/.npm/");
-				}
-			} catch (e) {
-				const reason = `Failed to update .npmignore: ${e.message}`;
-				params.body.push(reason);
-				await params.check.update({
-					conclusion: "failure",
-					body: params.body.join("\n\n---\n\n"),
-				});
-				return status.failure(statusReason({ reason, commit, repo }));
-			}
-
-			const args = [];
-			if (cfg.access) {
-				args.push("--access", cfg.access);
-			}
-			if (branch) {
-				args.push("--tag", gitRefToNpmTag(branch));
+		// add /.npm/ to the .npmignore file
+		const npmIgnore = params.project.path(".npmignore");
+		try {
+			if (await fs.pathExists(npmIgnore)) {
+				const npmIgnoreContent = await fs.readFile(npmIgnore, "utf8");
+				await fs.writeFile(npmIgnore, `${npmIgnoreContent}\n/.npm/`);
 			} else {
-				const tagVersion = semver.valid(tag.replace(/^v/, ""));
-				if (!tagVersion) {
-					args.push("--tag", gitRefToNpmTag(tag, "tag"));
-				} else if (tagVersion.includes("-")) {
-					// prerelease
-					args.push("--tag", "next");
-				} else {
-					// release
-					args.push("--tag", "latest");
-				}
+				await fs.writeFile(npmIgnore, "/.npm/");
 			}
+		} catch (e) {
+			const reason = `Failed to update .npmignore: ${e.message}`;
+			params.body.push(reason);
+			await params.check.update({
+				conclusion: "failure",
+				body: params.body.join("\n\n---\n\n"),
+			});
+			return status.failure(statusReason({ reason, commit, repo }));
+		}
 
-			const result = await params.project.spawn(
+		const args = [];
+		if (cfg.access) {
+			args.push("--access", cfg.access);
+		}
+		if (branch) {
+			args.push("--tag", gitRefToNpmTag(branch));
+		} else {
+			const tagVersion = semver.valid(tag.replace(/^v/, ""));
+			if (!tagVersion) {
+				args.push("--tag", gitRefToNpmTag(tag, "tag"));
+			} else if (tagVersion.includes("-")) {
+				// prerelease
+				args.push("--tag", "next");
+			} else {
+				// release
+				args.push("--tag", "latest");
+			}
+		}
+
+		const result = await params.project.spawn("npm", ["publish", ...args], {
+			env: {
+				...process.env,
+				PATH: `${params.path}:${process.env.PATH}`,
+			},
+		});
+		if (result.status !== 0) {
+			params.body.push(spawnFailure(result));
+			await params.check.update({
+				conclusion: "failure",
+				body: params.body.join("\n\n---\n\n"),
+			});
+			return status.failure(
+				statusReason({
+					reason: `\`${result.cmdString}\` failed`,
+					commit,
+					repo,
+				}),
+			);
+		}
+
+		const tags = cfg.tag || [];
+		if (branch && branch === repo.defaultBranch && !tags.includes("next")) {
+			tags.push("next");
+		}
+		const tagErrors: Array<{
+			cmdString: string;
+			stdout: string;
+			stderr: string;
+		}> = [];
+		for (const tag of tags) {
+			const tagResult = await params.project.spawn(
 				"npm",
-				["publish", ...args],
+				["dist-tag", "add", `${pj.name}@${pj.version}`, tag],
 				{
 					env: {
 						...process.env,
@@ -574,85 +598,45 @@ const NpmPublishStep: NpmStep = {
 					},
 				},
 			);
-			if (result.status !== 0) {
-				params.body.push(spawnFailure(result));
-				await params.check.update({
-					conclusion: "failure",
-					body: params.body.join("\n\n---\n\n"),
-				});
-				return status.failure(
-					statusReason({
-						reason: `\`${result.cmdString}\` failed`,
-						commit,
-						repo,
-					}),
-				);
+			if (tagResult.status !== 0) {
+				tagErrors.push(tagResult);
 			}
-
-			const tags = cfg.tag || [];
-			if (
-				branch &&
-				branch === repo.defaultBranch &&
-				!tags.includes("next")
-			) {
-				tags.push("next");
-			}
-			const tagErrors: Array<{
-				cmdString: string;
-				stdout: string;
-				stderr: string;
-			}> = [];
-			for (const tag of tags) {
-				const tagResult = await params.project.spawn(
-					"npm",
-					["dist-tag", "add", `${pj.name}@${pj.version}`, tag],
-					{
-						env: {
-							...process.env,
-							PATH: `${params.path}:${process.env.PATH}`,
-						},
-					},
-				);
-				if (tagResult.status !== 0) {
-					tagErrors.push(tagResult);
-				}
-			}
-			if (tagErrors.length > 0) {
-				params.body.push(
-					`Failed to create tags:\n\n` +
-						"```\n" +
-						tagErrors
-							.map(
-								e =>
-									`$ ${e.cmdString}\n` +
-									`${(e.stderr || e.stdout || "").trim()}`,
-							)
-							.join("\n") +
-						"\n```\n",
-				);
-				await params.check.update({
-					conclusion: "failure",
-					body: params.body.join("\n\n---\n\n"),
-				});
-				return status.failure(
-					statusReason({
-						reason: `\`${tagErrors
-							.map(e => e.cmdString)
-							.join(" && ")}\` failed`,
-						commit,
-						repo,
-					}),
-				);
-			}
-			params.body.push(`Published npm package`);
 		}
+		if (tagErrors.length > 0) {
+			params.body.push(
+				`Failed to create tags:\n\n` +
+					"```\n" +
+					tagErrors
+						.map(
+							e =>
+								`$ ${e.cmdString}\n` +
+								`${(e.stderr || e.stdout || "").trim()}`,
+						)
+						.join("\n") +
+					"\n```\n",
+			);
+			await params.check.update({
+				conclusion: "failure",
+				body: params.body.join("\n\n---\n\n"),
+			});
+			return status.failure(
+				statusReason({
+					reason: `\`${tagErrors
+						.map(e => e.cmdString)
+						.join(" && ")}\` failed`,
+					commit,
+					repo,
+				}),
+			);
+		}
+		params.body.push(`Published npm package`);
 		await params.check.update({
 			conclusion: "success",
 			body: params.body.join("\n\n---\n\n"),
 		});
 		return status.success(
 			statusReason({
-				reason: `npm Build of ${repo.owner}/${repo.name} succeeded`,
+				reason: `npm Build and Publish of ${repo.owner}/${repo.name} succeeded`,
 				commit,
 				repo,
 			}),
