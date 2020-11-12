@@ -338,10 +338,16 @@ const NpmScriptsStep: NpmStep = {
 			} else {
 				params.body.push(`npm script  \`${script}\` successful`);
 				await params.check.update({
-					conclusion: shouldPublish(ctx) ? undefined : "success",
+					conclusion: undefined,
 					body: params.body.join("\n\n---\n\n"),
 				});
 			}
+		}
+		if (!shouldPublish(ctx)) {
+			await params.check.update({
+				conclusion: "success",
+				body: params.body.join("\n\n---\n\n"),
+			});
 		}
 		return status.success(
 			statusReason({
