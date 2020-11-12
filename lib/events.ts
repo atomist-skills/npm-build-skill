@@ -338,7 +338,7 @@ const NpmScriptsStep: NpmStep = {
 			} else {
 				params.body.push(`npm script  \`${script}\` successful`);
 				await params.check.update({
-					conclusion: undefined,
+					conclusion: shouldPublish(ctx) ? undefined : "success",
 					body: params.body.join("\n\n---\n\n"),
 				});
 			}
@@ -349,9 +349,7 @@ const NpmScriptsStep: NpmStep = {
 
 const NpmVersionStep: NpmStep = {
 	name: "version",
-	runWhen: async ctx =>
-		ctx.configuration?.parameters.publish &&
-		ctx.configuration?.parameters.publish !== "no",
+	runWhen: async ctx => shouldPublish(ctx),
 	run: async (ctx, params) => {
 		const repo = eventRepo(ctx.data);
 		const commit = eventCommit(ctx.data);
@@ -506,18 +504,7 @@ const NpmVersionStep: NpmStep = {
 
 const NpmPublishStep: NpmStep = {
 	name: "npm publish",
-	runWhen: async ctx => {
-		const repo = eventRepo(ctx.data);
-		const branch = eventBranch(ctx.data);
-		const tag = eventTag(ctx.data);
-		return (
-			ctx.configuration?.parameters.publish &&
-			ctx.configuration?.parameters.publish !== "no" &&
-			(!!tag ||
-				(branch && ctx.configuration?.parameters.publish === "all") ||
-				branch === repo.defaultBranch)
-		);
-	},
+	runWhen: async ctx => shouldPublish(ctx),
 	run: async (ctx, params) => {
 		const cfg = ctx.configuration?.parameters;
 		const repo = eventRepo(ctx.data);
@@ -693,3 +680,22 @@ export const handler: EventHandler<
 		],
 		parameters: { body: [] },
 	});
+
+function shouldPublish(
+	ctx: EventContext<
+		| subscription.types.OnPushSubscription
+		| subscription.types.OnTagSubscription,
+		Configuration
+	>,
+): boolean {
+	const repo = eventRepo(ctx.data);
+	const branch = eventBranch(ctx.data);
+	const tag = eventTag(ctx.data);
+	return (
+		ctx.configuration?.parameters.publish &&
+		ctx.configuration?.parameters.publish !== "no" &&
+		(!!tag ||
+			(branch && ctx.configuration?.parameters.publish === "all") ||
+			branch === repo.defaultBranch)
+	);
+}
