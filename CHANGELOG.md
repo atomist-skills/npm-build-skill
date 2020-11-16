@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 -   Standardize status messages. [#70](https://github.com/atomist-skills/npm-build-skill/issues/70)
+-   Update skill icon. [c8ba6cc](https://github.com/atomist-skills/npm-build-skill/commit/c8ba6cc191f5db06e3751f4d5083eefd3ace1694)
 
 ### Removed
 
