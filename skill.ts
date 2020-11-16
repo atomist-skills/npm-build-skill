@@ -31,6 +31,8 @@ export const Skill = skill<
 	description: "Run npm scripts to compile or test your JavaScript project",
 	displayName: "npm Build",
 	categories: [Category.DevOps],
+	iconUrl:
+		"https://raw.githubusercontent.com/atomist-skills/npm-build-skill/main/docs/images/icon.svg",
 
 	resourceProviders: {
 		github: resourceProvider.gitHub({ minRequired: 1 }),
