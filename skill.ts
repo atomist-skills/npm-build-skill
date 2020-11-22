@@ -78,6 +78,8 @@ export const Skill = skill<
 			displayName: "Node.js version",
 			description:
 				"Version of Node.js to install (should be a valid [nvm alias or version](https://github.com/nvm-sh/nvm#usage))",
+			placeHolder: "lts",
+			defaultValue: "lts",
 			required: false,
 		},
 		publish: {
