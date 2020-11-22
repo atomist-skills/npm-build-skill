@@ -317,7 +317,7 @@ const NpmScriptsStep: NpmStep = {
 				params.body.push(spawnFailure(result));
 				await params.check.update({
 					conclusion: "failure",
-					body: params.body.join("\n\n--\n\n"),
+					body: params.body.join("\n\n---\n\n"),
 					annotations: annotations.map(r => ({
 						annotationLevel: r.severity,
 						path: r.path.replace(home + "/", ""),
