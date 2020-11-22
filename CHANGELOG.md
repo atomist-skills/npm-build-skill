@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/1.0.0...HEAD)
 
+### Fixed
+
+-   Leaving "Node.js version" blank. [#80](https://github.com/atomist-skills/npm-build-skill/issues/80)
+
 ## [1.0.0](https://github.com/atomist-skills/npm-skill/compare/0.3.3...1.0.0) - 2020-11-16
 
 ### Changed
