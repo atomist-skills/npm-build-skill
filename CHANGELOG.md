@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/1.0.1...HEAD)
 
+### Fixed
+
+-   Fix check body formatting. [a53f0cf](https://github.com/atomist-skills/npm-build-skill/commit/a53f0cf736a39496e1f6a63b70e770edf2b69651)
+
 ## [1.0.1](https://github.com/atomist-skills/npm-skill/compare/1.0.0...1.0.1) - 2020-11-22
 
 ### Fixed
