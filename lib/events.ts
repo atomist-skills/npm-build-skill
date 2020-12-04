@@ -351,7 +351,7 @@ const NpmScriptsStep: NpmStep = {
 		}
 		return status.success(
 			statusReason({
-				reason: `npm Build of ${repo.owner}/${repo.name} succeeded`,
+				reason: `npm build succeeded`,
 				commit,
 				repo,
 			}),
@@ -642,7 +642,7 @@ const NpmPublishStep: NpmStep = {
 		});
 		return status.success(
 			statusReason({
-				reason: `npm Build and Publish of ${repo.owner}/${repo.name} succeeded`,
+				reason: `npm build and publish succeeded`,
 				commit,
 				repo,
 			}),

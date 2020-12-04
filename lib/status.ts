@@ -23,7 +23,7 @@ export function spawnFailure(result: {
 	return (
 		"Failed to run command:\n\n" +
 		"```\n" +
-		`$ ${result.cmdString}\n` +
+		`$ ${trimDirectory(result.cmdString)}\n` +
 		`${(result.stderr || result.stdout || "").trim()}\n` +
 		"```\n"
 	);
@@ -46,5 +46,9 @@ export function statusReason(args: {
 		}
 		tail = ` on ${slug}`;
 	}
-	return `${args.reason}${tail}`;
+	return `${trimDirectory(args.reason)}${tail}`;
+}
+
+function trimDirectory(reason: string): string {
+	return reason.replace(/\/atm\/home ==> /, "");
 }
