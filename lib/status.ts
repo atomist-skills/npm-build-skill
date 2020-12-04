@@ -49,6 +49,6 @@ export function statusReason(args: {
 	return `${trimDirectory(args.reason)}${tail}`;
 }
 
-function trimDirectory(reason: string): string {
+export function trimDirectory(reason: string): string {
 	return reason.replace(/\/atm\/home ==> /, "");
 }

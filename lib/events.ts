@@ -42,7 +42,7 @@ import {
 	gitRefToNpmTag,
 	nextPrereleaseTag,
 } from "./git";
-import { spawnFailure, statusReason } from "./status";
+import { spawnFailure, statusReason, trimDirectory } from "./status";
 
 interface NpmParameters {
 	project: project.Project;
@@ -136,7 +136,9 @@ const CommandStep: NpmStep = {
 				}),
 			);
 		}
-		params.body.push(`Setup command \`${result.cmdString}\` successful`);
+		params.body.push(
+			`Setup command \`${trimDirectory(result.cmdString)}\` successful`,
+		);
 		await params.check.update({
 			conclusion: undefined,
 			body: params.body.join("\n\n---\n\n"),
@@ -336,7 +338,7 @@ const NpmScriptsStep: NpmStep = {
 					}),
 				);
 			} else {
-				params.body.push(`npm script  \`${script}\` successful`);
+				params.body.push(`npm run \`${script}\` successful`);
 				await params.check.update({
 					conclusion: undefined,
 					body: params.body.join("\n\n---\n\n"),
