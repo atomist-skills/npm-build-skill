@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased](https://github.com/atomist-skills/npm-skill/compare/1.0.2...HEAD)
 
+### Added
+
+-   Add branch and tag filter. [37ab766](https://github.com/atomist-skills/npm-build-skill/commit/37ab7661bf26917596c85d8563b00044213ccca7)
+
 ## [1.0.2](https://github.com/atomist-skills/npm-skill/compare/1.0.1...1.0.2) - 2020-11-22
 
 ### Fixed
