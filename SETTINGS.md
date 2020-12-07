@@ -72,6 +72,14 @@ Connect and configure these integrations:
     [semantic version][semver], the `latest` tag is added, making the published
     version the new default.
 
+1.  **Specify optional branch or tag filters**
+
+    Specify one or more regular expressions to match against the branch or tag
+    name of the skill trigger.
+
+    To limit this skill to only run on _feature_ branches, you could use the
+    `feature\/.*` regular expression as filter.
+
 1.  **Specify an optional bash command**
 
     ![Shell command](docs/images/shell-command.png)
@@ -81,7 +89,7 @@ Connect and configure these integrations:
     20.04 LTS container. This command is after the code is checked out but
     before Node.js is setup or any npm commands are run.
 
-    Here's is an example on how to install MongoDB and start it:
+    Here is an example on how to install MongoDB and start it:
 
     ```bash
     apt-get update \

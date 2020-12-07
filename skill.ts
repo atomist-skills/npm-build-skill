@@ -26,7 +26,7 @@ import {
 import { Configuration } from "./lib/configuration";
 
 export const Skill = skill<
-	Configuration & { repos: any; subscription_filter: any }
+	Configuration & { repos: any; subscription_filter: any; ref_filter: any }
 >({
 	description: "Run npm scripts to compile or test your JavaScript project",
 	displayName: "npm Build",
@@ -117,6 +117,10 @@ export const Skill = skill<
 			description:
 				"Register the published package with the given tags. If no tag is set here, the package will get published with a branch specific tag, e.g. `branch-<name of branch>`.",
 			required: false,
+		},
+		ref_filter: {
+			...parameter.refFilter(),
+			visibility: ParameterVisibility.Advanced,
 		},
 		command: {
 			type: ParameterType.String,
