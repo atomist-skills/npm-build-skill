@@ -412,7 +412,7 @@ const NpmVersionStep: NpmStep = {
 						let tags: string[] = [];
 						try {
 							tags = await octokit.paginate(
-								"GET /repos/:owner/:repo/tags",
+								"GET /repos/{owner}/{repo}/tags",
 								{
 									owner: repo.owner,
 									repo: repo.name,
