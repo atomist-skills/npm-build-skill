@@ -92,7 +92,7 @@ const ValidateStep: NpmStep = {
 	run: async (ctx, params) => {
 		if (!(await fs.pathExists(params.project.path("package.json")))) {
 			return status
-				.success(`Ignoring push to non-NPM project`)
+				.success(`Ignoring push to non-npm project`)
 				.hidden()
 				.abort();
 		}
@@ -101,7 +101,7 @@ const ValidateStep: NpmStep = {
 		const commit = eventCommit(ctx.data);
 		params.check = await github.createCheck(ctx, params.project.id, {
 			sha: commit.sha,
-			title: "npm Build",
+			title: "npm",
 			name: `${ctx.skill.name}/${ctx.configuration?.name}`,
 			body: "Running npm Build",
 		});
