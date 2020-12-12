@@ -15,6 +15,7 @@
  */
 
 import * as assert from "power-assert";
+
 import { cleanGitRef, gitRefToNpmTag, nextPrereleaseTag } from "../lib/git";
 
 describe("git", () => {

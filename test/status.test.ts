@@ -15,6 +15,7 @@
  */
 
 import * as assert from "power-assert";
+
 import { spawnFailure, statusReason } from "../lib/status";
 
 describe("status", () => {

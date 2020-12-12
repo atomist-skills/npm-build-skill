@@ -23,6 +23,7 @@ import {
 	resourceProvider,
 	skill,
 } from "@atomist/skill";
+
 import { Configuration } from "./lib/configuration";
 
 export const Skill = skill<
