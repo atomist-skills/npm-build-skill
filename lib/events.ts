@@ -32,6 +32,7 @@ import * as os from "os";
 import * as pRetry from "p-retry";
 import * as path from "path";
 import * as semver from "semver";
+
 import { extractAnnotations } from "./annotation";
 import { Configuration } from "./configuration";
 import {
