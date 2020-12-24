@@ -47,17 +47,17 @@
     "test:one": "mocha --require espower-typescript/guess \"test/**/${TEST:-*.test.ts}\""
   },
   "dependencies": {
-    "@atomist/skill": "^0.6.3-main.48",
+    "@atomist/skill": "^0.6.3-main.50",
     "fs-extra": "^9.0.1",
     "p-retry": "^4.2.0",
     "semver": "^7.3.4"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.7.1",
-    "@graphql-codegen/cli": "^1.19.4",
+    "@graphql-codegen/cli": "^1.20.0",
     "@graphql-codegen/typescript": "^1.19.0",
-    "@graphql-codegen/typescript-operations": "^1.17.12",
-    "@types/fs-extra": "^9.0.5",
+    "@graphql-codegen/typescript-operations": "^1.17.13",
+    "@types/fs-extra": "^9.0.6",
     "@types/mocha": "^8.2.0",
     "@types/power-assert": "^1.5.3",
     "@types/semver": "^7.3.4",
