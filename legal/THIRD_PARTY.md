@@ -12,7 +12,7 @@ This page details all runtime dependencies of `@atomist/npm-build-skill`.
 | ------------------------------- | ----- |
 | [0BSD](#0bsd)                   | 2     |
 | [AFLv2.1](#aflv21)              | 1     |
-| [Apache-2.0](#apache-20)        | 47    |
+| [Apache-2.0](#apache-20)        | 46    |
 | [BSD-2-Clause](#bsd-2-clause)   | 10    |
 | [BSD-3-Clause](#bsd-3-clause)   | 25    |
 | [BSD](#bsd)                     | 1     |
@@ -21,7 +21,7 @@ This page details all runtime dependencies of `@atomist/npm-build-skill`.
 | [GPL-3.0](#gpl-30)              | 1     |
 | [ISC](#isc)                     | 44    |
 | [MIT AND Zlib](#mit-and-zlib)   | 1     |
-| [MIT](#mit)                     | 582   |
+| [MIT](#mit)                     | 583   |
 | [Public Domain](#public-domain) | 1     |
 | [Unlicense](#unlicense)         | 1     |
 
@@ -47,7 +47,7 @@ Apache License 2.0 - [http://www.apache.org/licenses/LICENSE-2.0](http://www.apa
 | Name                                  | Version         | Publisher             | Repository                                                                                                                       |
 | ------------------------------------- | --------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `@atomist/skill-logging`              | `0.2.6`         | Atomist               | [https://github.com/atomist-skills/skill-logging](https://github.com/atomist-skills/skill-logging)                               |
-| `@atomist/skill`                      | `0.6.3-main.58` | Atomist, Inc.         | [https://github.com/atomist-skills/skill](https://github.com/atomist-skills/skill)                                               |
+| `@atomist/skill`                      | `0.6.3-main.60` | Atomist, Inc.         | [https://github.com/atomist-skills/skill](https://github.com/atomist-skills/skill)                                               |
 | `@atomist/slack-messages`             | `1.2.1`         | Atomist               | [https://github.com/atomist/slack-messages](https://github.com/atomist/slack-messages)                                           |
 | `@google-cloud/common`                | `3.5.0`         | Google Inc.           | [https://github.com/googleapis/nodejs-common](https://github.com/googleapis/nodejs-common)                                       |
 | `@google-cloud/logging`               | `8.2.0`         | Google Inc.           | [https://github.com/googleapis/nodejs-logging](https://github.com/googleapis/nodejs-logging)                                     |
@@ -57,9 +57,8 @@ Apache License 2.0 - [http://www.apache.org/licenses/LICENSE-2.0](http://www.apa
 | `@google-cloud/promisify`             | `2.0.3`         | Google Inc.           | [https://github.com/googleapis/nodejs-promisify](https://github.com/googleapis/nodejs-promisify)                                 |
 | `@google-cloud/pubsub`                | `2.7.0`         | Google Inc.           | [https://github.com/googleapis/nodejs-pubsub](https://github.com/googleapis/nodejs-pubsub)                                       |
 | `@google-cloud/storage`               | `5.7.0`         | Google Inc.           | [https://github.com/googleapis/nodejs-storage](https://github.com/googleapis/nodejs-storage)                                     |
-| `@grpc/grpc-js`                       | `1.1.8`         | Google Inc.           | [https://github.com/grpc/grpc-node/tree/master/packages/grpc-js](https://github.com/grpc/grpc-node/tree/master/packages/grpc-js) |
+| `@grpc/grpc-js`                       | `1.2.2`         | Google Inc.           | [https://github.com/grpc/grpc-node/tree/master/packages/grpc-js](https://github.com/grpc/grpc-node/tree/master/packages/grpc-js) |
 | `@grpc/proto-loader`                  | `0.5.5`         | Google Inc.           | [https://github.com/grpc/grpc-node](https://github.com/grpc/grpc-node)                                                           |
-| `@grpc/proto-loader`                  | `0.6.0-pre9`    | Google Inc.           | [https://github.com/grpc/grpc-node](https://github.com/grpc/grpc-node)                                                           |
 | `@opencensus/core`                    | `0.0.22`        | Google Inc.           | [https://github.com/census-instrumentation/opencensus-node](https://github.com/census-instrumentation/opencensus-node)           |
 | `@opencensus/propagation-stackdriver` | `0.0.22`        | OpenCensus Authors    | [https://github.com/census-instrumentation/opencensus-node](https://github.com/census-instrumentation/opencensus-node)           |
 | `@opentelemetry/api`                  | `0.11.0`        | OpenTelemetry Authors | [https://github.com/open-telemetry/opentelemetry-js](https://github.com/open-telemetry/opentelemetry-js)                         |
@@ -81,7 +80,7 @@ Apache License 2.0 - [http://www.apache.org/licenses/LICENSE-2.0](http://www.apa
 | `gaxios`                              | `4.1.0`         | Google, LLC           | [https://github.com/googleapis/gaxios](https://github.com/googleapis/gaxios)                                                     |
 | `gcp-metadata`                        | `4.2.1`         | Stephen Sawchuk       | [https://github.com/googleapis/gcp-metadata](https://github.com/googleapis/gcp-metadata)                                         |
 | `google-auth-library`                 | `6.1.3`         | Google Inc.           | [https://github.com/googleapis/google-auth-library-nodejs](https://github.com/googleapis/google-auth-library-nodejs)             |
-| `google-gax`                          | `2.9.2`         | Google API Authors    | [https://github.com/googleapis/gax-nodejs](https://github.com/googleapis/gax-nodejs)                                             |
+| `google-gax`                          | `2.10.0`        | Google API Authors    | [https://github.com/googleapis/gax-nodejs](https://github.com/googleapis/gax-nodejs)                                             |
 | `hex2dec`                             | `1.1.2`         |                       | [https://github.com/donmccurdy/hex2dec](https://github.com/donmccurdy/hex2dec)                                                   |
 | `json-to-pretty-yaml`                 | `1.2.2`         |                       | [https://github.com/alexcrist/json-to-pretty-yaml](https://github.com/alexcrist/json-to-pretty-yaml)                             |
 | `long`                                | `4.0.0`         | Daniel Wirtz          | [https://github.com/dcodeIO/long.js](https://github.com/dcodeIO/long.js)                                                         |
@@ -324,17 +323,18 @@ MIT License - [https://opensource.org/licenses/MIT](https://opensource.org/licen
 | `@octokit/core`                                      | `3.2.4`         |                                | [https://github.com/octokit/core.js](https://github.com/octokit/core.js)                                                                                                                             |
 | `@octokit/endpoint`                                  | `6.0.10`        |                                | [https://github.com/octokit/endpoint.js](https://github.com/octokit/endpoint.js)                                                                                                                     |
 | `@octokit/graphql`                                   | `4.5.8`         |                                | [https://github.com/octokit/graphql.js](https://github.com/octokit/graphql.js)                                                                                                                       |
-| `@octokit/openapi-types`                             | `2.0.1`         | Gregor Martynus                | [https://github.com/octokit/openapi-types.ts](https://github.com/octokit/openapi-types.ts)                                                                                                           |
-| `@octokit/plugin-paginate-rest`                      | `2.6.2`         |                                | [https://github.com/octokit/plugin-paginate-rest.js](https://github.com/octokit/plugin-paginate-rest.js)                                                                                             |
+| `@octokit/openapi-types`                             | `2.2.0`         | Gregor Martynus                | [https://github.com/octokit/openapi-types.ts](https://github.com/octokit/openapi-types.ts)                                                                                                           |
+| `@octokit/plugin-paginate-rest`                      | `2.7.0`         |                                | [https://github.com/octokit/plugin-paginate-rest.js](https://github.com/octokit/plugin-paginate-rest.js)                                                                                             |
 | `@octokit/plugin-request-log`                        | `1.0.2`         |                                | [https://github.com/octokit/plugin-request-log.js](https://github.com/octokit/plugin-request-log.js)                                                                                                 |
 | `@octokit/plugin-rest-endpoint-methods`              | `4.4.1`         |                                | [https://github.com/octokit/plugin-rest-endpoint-methods.js](https://github.com/octokit/plugin-rest-endpoint-methods.js)                                                                             |
+| `@octokit/plugin-rest-endpoint-methods`              | `4.4.3`         |                                | [https://github.com/octokit/plugin-rest-endpoint-methods.js](https://github.com/octokit/plugin-rest-endpoint-methods.js)                                                                             |
 | `@octokit/plugin-retry`                              | `3.0.6`         |                                | [https://github.com/octokit/plugin-retry.js](https://github.com/octokit/plugin-retry.js)                                                                                                             |
 | `@octokit/plugin-throttling`                         | `3.3.4`         |                                | [https://github.com/octokit/plugin-throttling.js](https://github.com/octokit/plugin-throttling.js)                                                                                                   |
 | `@octokit/request-error`                             | `2.0.4`         |                                | [https://github.com/octokit/request-error.js](https://github.com/octokit/request-error.js)                                                                                                           |
 | `@octokit/request`                                   | `5.4.12`        |                                | [https://github.com/octokit/request.js](https://github.com/octokit/request.js)                                                                                                                       |
 | `@octokit/rest`                                      | `18.0.12`       |                                | [https://github.com/octokit/rest.js](https://github.com/octokit/rest.js)                                                                                                                             |
 | `@octokit/types`                                     | `5.5.0`         |                                | [https://github.com/octokit/types.ts](https://github.com/octokit/types.ts)                                                                                                                           |
-| `@octokit/types`                                     | `6.1.2`         |                                | [https://github.com/octokit/types.ts](https://github.com/octokit/types.ts)                                                                                                                           |
+| `@octokit/types`                                     | `6.2.1`         |                                | [https://github.com/octokit/types.ts](https://github.com/octokit/types.ts)                                                                                                                           |
 | `@samverschueren/stream-to-observable`               | `0.3.1`         |                                | [https://github.com/SamVerschueren/stream-to-observable](https://github.com/SamVerschueren/stream-to-observable)                                                                                     |
 | `@sindresorhus/is`                                   | `0.14.0`        | Sindre Sorhus                  | [https://github.com/sindresorhus/is](https://github.com/sindresorhus/is)                                                                                                                             |
 | `@szmarczak/http-timer`                              | `1.1.2`         | Szymon Marczak                 | [https://github.com/szmarczak/http-timer](https://github.com/szmarczak/http-timer)                                                                                                                   |
