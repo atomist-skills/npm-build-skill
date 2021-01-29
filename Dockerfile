@@ -9,7 +9,7 @@ RUN npm ci --no-optional && \
     npm run compile && \
     rm -rf node_modules .git
 
-FROM ubuntu:focal
+FROM ubuntu:rolling
 
 # tools
 RUN apt-get update && apt-get install -y \
