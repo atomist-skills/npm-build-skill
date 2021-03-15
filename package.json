@@ -54,15 +54,15 @@
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.7.1",
-    "@graphql-codegen/cli": "^1.21.2",
+    "@graphql-codegen/cli": "^1.21.3",
     "@graphql-codegen/typescript": "^1.21.1",
     "@graphql-codegen/typescript-operations": "^1.17.15",
     "@types/fs-extra": "^9.0.8",
     "@types/mocha": "^8.2.1",
     "@types/power-assert": "^1.5.3",
     "@types/semver": "^7.3.4",
-    "@typescript-eslint/eslint-plugin": "^4.17.0",
-    "@typescript-eslint/parser": "^4.17.0",
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
     "eslint": "^7.22.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.3.1",
@@ -78,7 +78,7 @@
     "rimraf": "^3.0.2",
     "supervisor": "^0.12.0",
     "ts-node": "^9.1.1",
-    "typedoc": "^0.20.30",
+    "typedoc": "^0.20.32",
     "typescript": "^4.2.3"
   },
   "husky": {
