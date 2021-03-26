@@ -9,7 +9,7 @@ RUN npm ci --no-optional && \
     npm run compile && \
     rm -rf node_modules .git
 
-FROM ubuntu:rolling
+FROM ubuntu:20.10
 
 # tools
 RUN apt-get update && apt-get install -y \
