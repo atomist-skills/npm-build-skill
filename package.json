@@ -1,10 +1,11 @@
 {
   "name": "@atomist/npm-build-skill",
-  "homepage": "https://github.com/atomist-skills/npm-build-skill#readme",
+  "homepage": "https://github.com/atomist-skills/npm-build-skill",
   "license": "Apache-2.0",
   "author": {
-    "name": "Atomist",
-    "email": "oss@atomist.com"
+    "name": "Atomist, Inc.",
+    "email": "oss@atomist.com",
+    "url": "https://atomist.com"
   },
   "main": "node_modules/@atomist/skill/lib/function.js",
   "directories": {
@@ -26,7 +27,7 @@
     "clean:npm": "rimraf node_modules",
     "clean:run": "rimraf *-v8.log profile.txt log",
     "clean:test": "rimraf .nyc_output coverage",
-    "compile": "run-s compile:ts",
+    "compile": "run-s gql:gen compile:ts",
     "compile:ts": "tsc --project .",
     "doc": "typedoc --mode modules --excludeExternals --ignoreCompilerErrors --exclude \"**/*.d.ts\" --out doc index.ts lib",
     "gql:gen": "atm-skill gql-generate",
