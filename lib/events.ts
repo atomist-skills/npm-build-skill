@@ -19,6 +19,7 @@ import {
 	EventContext,
 	EventHandler,
 	github,
+	log,
 	project,
 	repository,
 	runSteps,
@@ -121,7 +122,7 @@ const CommandStep: NpmStep = {
 		const result = await childProcess.spawnPromise(
 			"bash",
 			["-c", ctx.configuration.parameters.command],
-			{ log: childProcess.captureLog() },
+			{ log: childProcess.captureLog(log.info) },
 		);
 		if (result.status !== 0) {
 			params.body.push(spawnFailure(result));
@@ -184,10 +185,11 @@ const SetupNodeStep: NpmStep = {
 		const commit = eventCommit(ctx.data);
 		const cfg = ctx.configuration?.parameters;
 		// Set up node version
-		let result = await params.project.spawn("bash", [
-			"-c",
-			`. /opt/.nvm/nvm.sh && nvm install ${cfg.version}`,
-		]);
+		let result = await params.project.spawn(
+			"bash",
+			["-c", `. /opt/.nvm/nvm.sh && nvm install ${cfg.version}`],
+			{ level: "info" },
+		);
 		if (result.status !== 0) {
 			params.body.push(spawnFailure(result));
 			await params.check.update({
@@ -203,12 +205,13 @@ const SetupNodeStep: NpmStep = {
 			);
 		}
 		// set the unsafe-prem config
-		await params.project.spawn("bash", [
-			"-c",
-			`. /opt/.nvm/nvm.sh && npm config set unsafe-perm true`,
-		]);
+		await params.project.spawn(
+			"bash",
+			["-c", `. /opt/.nvm/nvm.sh && npm config set unsafe-perm true`],
+			{ level: "info" },
+		);
 
-		const captureLog = childProcess.captureLog();
+		const captureLog = childProcess.captureLog(log.info);
 		result = await params.project.spawn(
 			"bash",
 			["-c", `. /opt/.nvm/nvm.sh && nvm which ${cfg.version}`],
@@ -272,6 +275,7 @@ const NpmInstallStep: NpmStep = {
 				NODE_ENV: "development",
 				PATH: `${params.path}:${process.env.PATH}`,
 			},
+			level: "info" as any,
 		};
 		let result: childProcess.SpawnPromiseReturns;
 		if (await fs.pathExists(params.project.path("package-lock.json"))) {
@@ -320,7 +324,7 @@ const NpmScriptsStep: NpmStep = {
 
 		// Run scripts
 		for (const script of scripts) {
-			const captureLog = childProcess.captureLog();
+			const captureLog = childProcess.captureLog(log.info);
 			const result = await params.project.spawn(
 				"npm",
 				["run", "--if-present", script],
@@ -404,6 +408,7 @@ const NpmVersionStep: NpmStep = {
 					...process.env,
 					PATH: `${params.path}:${process.env.PATH}`,
 				},
+				level: "info",
 			});
 			pj = await fs.readJson(params.project.path("package.json"));
 			version = pj.version;
@@ -512,6 +517,7 @@ const NpmVersionStep: NpmStep = {
 					...process.env,
 					PATH: `${params.path}:${process.env.PATH}`,
 				},
+				level: "info",
 			},
 		);
 		if (result.status !== 0) {
@@ -572,6 +578,7 @@ const NpmPublishStep: NpmStep = {
 				...process.env,
 				PATH: `${params.path}:${process.env.PATH}`,
 			},
+			level: "info",
 		});
 		if (result.status !== 0) {
 			params.body.push(spawnFailure(result));
@@ -606,6 +613,7 @@ const NpmPublishStep: NpmStep = {
 						...process.env,
 						PATH: `${params.path}:${process.env.PATH}`,
 					},
+					level: "info",
 				},
 			);
 			if (tagResult.status !== 0) {
