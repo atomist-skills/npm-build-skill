@@ -246,6 +246,26 @@ const NpmInstallStep: NpmStep = {
 	run: async (ctx, params) => {
 		const repo = eventRepo(ctx.data);
 		const commit = eventCommit(ctx.data);
+
+		// add /.npm/ to the .npmignore file
+		const npmIgnore = params.project.path(".npmignore");
+		try {
+			if (await fs.pathExists(npmIgnore)) {
+				const npmIgnoreContent = await fs.readFile(npmIgnore, "utf8");
+				await fs.writeFile(npmIgnore, `${npmIgnoreContent}\n/.npm/`);
+			} else {
+				await fs.writeFile(npmIgnore, "/.npm/");
+			}
+		} catch (e) {
+			const reason = `Failed to update .npmignore: ${e.message}`;
+			params.body.push(reason);
+			await params.check.update({
+				conclusion: "failure",
+				body: params.body.join("\n\n---\n\n"),
+			});
+			return status.failure(statusReason({ reason, commit, repo }));
+		}
+
 		const opts = {
 			env: {
 				...process.env,
@@ -527,25 +547,6 @@ const NpmPublishStep: NpmStep = {
 		const branch = eventBranch(ctx.data);
 		const tag = eventTag(ctx.data);
 		const pj = await fs.readJson(params.project.path("package.json"));
-
-		// add /.npm/ to the .npmignore file
-		const npmIgnore = params.project.path(".npmignore");
-		try {
-			if (await fs.pathExists(npmIgnore)) {
-				const npmIgnoreContent = await fs.readFile(npmIgnore, "utf8");
-				await fs.writeFile(npmIgnore, `${npmIgnoreContent}\n/.npm/`);
-			} else {
-				await fs.writeFile(npmIgnore, "/.npm/");
-			}
-		} catch (e) {
-			const reason = `Failed to update .npmignore: ${e.message}`;
-			params.body.push(reason);
-			await params.check.update({
-				conclusion: "failure",
-				body: params.body.join("\n\n---\n\n"),
-			});
-			return status.failure(statusReason({ reason, commit, repo }));
-		}
 
 		const args = [];
 		if (cfg.access) {
