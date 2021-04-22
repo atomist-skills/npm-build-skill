@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 -   Add .npm to .npmignore during install step. [bff42ec](https://github.com/atomist-skills/npm-build-skill/commit/bff42ecc72ab7a3cf57f99ff2326054492217536)
+-   Update to new logging. [19f038c](https://github.com/atomist-skills/npm-build-skill/commit/19f038c3e88642dfbdb9dc9d6edb4013fa8cddb1)
 
 ## [1.0.4](https://github.com/atomist-skills/npm-skill/compare/1.0.3...1.0.4) - 2021-04-01
 
