@@ -1,6 +1,6 @@
 {
   "name": "@atomist/npm-build-skill",
-  "homepage": "https://github.com/atomist-skills/npm-build-skill",
+  "homepage": "https://github.com/atomist-skills/npm-build-skill#readme",
   "license": "Apache-2.0",
   "author": {
     "name": "Atomist, Inc.",
@@ -27,9 +27,10 @@
     "clean:npm": "rimraf node_modules",
     "clean:run": "rimraf *-v8.log profile.txt log",
     "clean:test": "rimraf .nyc_output coverage",
-    "compile": "run-s gql:gen compile:ts",
+    "compile": "run-s git:info gql:gen compile:ts",
     "compile:ts": "tsc --project .",
     "doc": "typedoc --mode modules --excludeExternals --ignoreCompilerErrors --exclude \"**/*.d.ts\" --out doc index.ts lib",
+    "git:info": "atm-npm-tools git-info",
     "gql:gen": "atm-skill gql-generate",
     "lint": "run-p lint:eslint lint:prettier",
     "lint:eslint": "eslint --ext .ts .",
@@ -54,6 +55,7 @@
     "semver": "^7.3.5"
   },
   "devDependencies": {
+    "@atomist/npm-tools": "^0.1.1-main.0",
     "@google-cloud/functions-framework": "^1.7.1",
     "@graphql-codegen/cli": "^1.21.4",
     "@graphql-codegen/typescript": "^1.22.0",
