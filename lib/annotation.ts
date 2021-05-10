@@ -22,8 +22,7 @@ const Matchers = [
 		pattern: [
 			// TypeScript < 3.9 compile output
 			{
-				regexp:
-					"^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+				regexp: "^(.*):([0-9]+):([0-9]+)\\s-\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
 				groups: {
 					path: 1,
 					line: 2,
@@ -35,8 +34,7 @@ const Matchers = [
 			},
 			// TypeScript 3.9 compile output
 			{
-				regexp:
-					"^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
+				regexp: "^(.*)\\(([0-9]+),([0-9]+)\\):\\s([\\S]+)\\s(.*):\\s(.*)\\.$",
 				groups: {
 					path: 1,
 					line: 2,
