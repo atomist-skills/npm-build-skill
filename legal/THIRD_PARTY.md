@@ -127,9 +127,9 @@ BSD 3-Clause "New" or "Revised" License - [https://opensource.org/licenses/BSD-3
 
 Creative Commons Attribution 4.0 International - [https://creativecommons.org/licenses/by/4.0/legalcode](https://creativecommons.org/licenses/by/4.0/legalcode)
 
-| Name           | Version        | Publisher  | Repository                                                                       |
-| -------------- | -------------- | ---------- | -------------------------------------------------------------------------------- |
-| `caniuse-lite` | `1.0.30001211` | Ben Briggs | [https://github.com/ben-eb/caniuse-lite](https://github.com/ben-eb/caniuse-lite) |
+| Name           | Version        | Publisher  | Repository                                                                                   |
+| -------------- | -------------- | ---------- | -------------------------------------------------------------------------------------------- |
+| `caniuse-lite` | `1.0.30001228` | Ben Briggs | [https://github.com/browserslist/caniuse-lite](https://github.com/browserslist/caniuse-lite) |
 
 #### CC0-1.0
 
@@ -169,7 +169,7 @@ ISC License - [https://www.isc.org/downloads/software-support-policy/isc-license
 | `cliui`                     | `6.0.0`   | Ben Coe            | [https://github.com/yargs/cliui](https://github.com/yargs/cliui)                                             |
 | `cliui`                     | `7.0.4`   | Ben Coe            | [https://github.com/yargs/cliui](https://github.com/yargs/cliui)                                             |
 | `deprecation`               | `2.3.1`   |                    | [https://github.com/gr2m/deprecation](https://github.com/gr2m/deprecation)                                   |
-| `electron-to-chromium`      | `1.3.717` | Kilian Valkhof     | [https://github.com/kilian/electron-to-chromium](https://github.com/kilian/electron-to-chromium)             |
+| `electron-to-chromium`      | `1.3.738` | Kilian Valkhof     | [https://github.com/kilian/electron-to-chromium](https://github.com/kilian/electron-to-chromium)             |
 | `fastq`                     | `1.10.1`  | Matteo Collina     | [https://github.com/mcollina/fastq](https://github.com/mcollina/fastq)                                       |
 | `fs.realpath`               | `1.0.0`   | Isaac Z. Schlueter | [https://github.com/isaacs/fs.realpath](https://github.com/isaacs/fs.realpath)                               |
 | `get-caller-file`           | `2.0.5`   | Stefan Penner      | [https://github.com/stefanpenner/get-caller-file](https://github.com/stefanpenner/get-caller-file)           |
@@ -387,7 +387,7 @@ MIT License - [https://opensource.org/licenses/MIT](https://opensource.org/licen
 | `bottleneck`                                         | `2.19.5`        | Simon Grondin                  | [https://github.com/SGrondin/bottleneck](https://github.com/SGrondin/bottleneck)                                                                                                                     |
 | `brace-expansion`                                    | `1.1.11`        | Julian Gruber                  | [https://github.com/juliangruber/brace-expansion](https://github.com/juliangruber/brace-expansion)                                                                                                   |
 | `braces`                                             | `3.0.2`         | Jon Schlinkert                 | [https://github.com/micromatch/braces](https://github.com/micromatch/braces)                                                                                                                         |
-| `browserslist`                                       | `4.16.4`        | Andrey Sitnik                  | [https://github.com/browserslist/browserslist](https://github.com/browserslist/browserslist)                                                                                                         |
+| `browserslist`                                       | `4.16.6`        | Andrey Sitnik                  | [https://github.com/browserslist/browserslist](https://github.com/browserslist/browserslist)                                                                                                         |
 | `buffer-from`                                        | `1.1.1`         |                                | [https://github.com/LinusU/buffer-from](https://github.com/LinusU/buffer-from)                                                                                                                       |
 | `buffer`                                             | `5.7.1`         | Feross Aboukhadijeh            | [https://github.com/feross/buffer](https://github.com/feross/buffer)                                                                                                                                 |
 | `busboy`                                             | `0.3.1`         | Brian White                    | [https://github.com/mscdex/busboy](https://github.com/mscdex/busboy)                                                                                                                                 |
@@ -637,7 +637,7 @@ MIT License - [https://opensource.org/licenses/MIT](https://opensource.org/licen
 | `node-eta`                                           | `0.9.0`         | Constantin Titarenko           | [https://github.com/titarenko/eta](https://github.com/titarenko/eta)                                                                                                                                 |
 | `node-fetch`                                         | `2.6.1`         | David Frank                    | [https://github.com/bitinn/node-fetch](https://github.com/bitinn/node-fetch)                                                                                                                         |
 | `node-int64`                                         | `0.4.0`         | Robert Kieffer                 | [https://github.com/broofa/node-int64](https://github.com/broofa/node-int64)                                                                                                                         |
-| `node-releases`                                      | `1.1.71`        | Sergey Rubanov                 | [https://github.com/chicoxyzzy/node-releases](https://github.com/chicoxyzzy/node-releases)                                                                                                           |
+| `node-releases`                                      | `1.1.72`        | Sergey Rubanov                 | [https://github.com/chicoxyzzy/node-releases](https://github.com/chicoxyzzy/node-releases)                                                                                                           |
 | `normalize-path`                                     | `2.1.1`         | Jon Schlinkert                 | [https://github.com/jonschlinkert/normalize-path](https://github.com/jonschlinkert/normalize-path)                                                                                                   |
 | `normalize-path`                                     | `3.0.0`         | Jon Schlinkert                 | [https://github.com/jonschlinkert/normalize-path](https://github.com/jonschlinkert/normalize-path)                                                                                                   |
 | `normalize-url`                                      | `3.3.0`         | Sindre Sorhus                  | [https://github.com/sindresorhus/normalize-url](https://github.com/sindresorhus/normalize-url)                                                                                                       |
