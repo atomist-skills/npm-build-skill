@@ -11,6 +11,13 @@ RUN npm ci --no-optional && \
 
 FROM ubuntu:rolling@sha256:9a5cc8359b220b9414e4dc6ec992f867b33f864c560a1e198fb833f98b8f7f3c
 
+# Fix CVE-2021-26932, CVE-2021-3520
+RUN apt-get update && apt-get install -y \
+    linux-libc-dev \
+    liblz4-1 \
+ && apt-get clean -y \
+ && rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # tools
 RUN apt-get update && apt-get install -y \
     build-essential=12.8ubuntu3 \
