@@ -13,13 +13,13 @@ FROM ubuntu:rolling@sha256:9a5cc8359b220b9414e4dc6ec992f867b33f864c560a1e198fb83
 
 # tools
 RUN apt-get update && apt-get install -y \
-        curl \
-        wget \
-        gnupg\
-        git \
-        build-essential && \
-        apt-get clean -y && \
-        rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    build-essential=12.8ubuntu3 \
+    curl=7.74.0-1ubuntu2 \
+    git=1:2.30.2-1ubuntu1 \
+    gnupg=2.2.20-1ubuntu3 \
+    wget=1.21-1ubuntu3 \
+ && apt-get clean -y \
+ && rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # nvm
 ENV NVM_DIR /opt/.nvm
