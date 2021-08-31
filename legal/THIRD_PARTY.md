@@ -8,21 +8,21 @@ This page details all runtime dependencies of `@atomist/npm-build-skill`.
 
 ### Summary
 
-| License                         | Count |
-| ------------------------------- | ----- |
-| [0BSD](#0bsd)                   | 5     |
-| [Apache-2.0](#apache-20)        | 36    |
-| [BSD-2-Clause](#bsd-2-clause)   | 9     |
-| [BSD-3-Clause](#bsd-3-clause)   | 22    |
-| [CC-BY-4.0](#cc-by-40)          | 1     |
-| [CC0-1.0](#cc0-10)              | 2     |
-| [GPL-2.0](#gpl-20)              | 1     |
-| [GPL-3.0](#gpl-30)              | 1     |
-| [ISC](#isc)                     | 43    |
-| [MIT AND Zlib](#mit-and-zlib)   | 1     |
-| [MIT](#mit)                     | 599   |
-| [Public Domain](#public-domain) | 1     |
-| [Python-2.0](#python-20)        | 1     |
+| License                              | Count |
+| ------------------------------------ | ----- |
+| [0BSD](#0bsd)                        | 5     |
+| [Apache-2.0](#apache-20)             | 36    |
+| [BSD-2-Clause](#bsd-2-clause)        | 9     |
+| [BSD-3-Clause](#bsd-3-clause)        | 22    |
+| [CC-BY-4.0](#cc-by-40)               | 1     |
+| [CC0-1.0](#cc0-10)                   | 2     |
+| [GPL-2.0](#gpl-20)                   | 1     |
+| [GPL-3.0-or-later](#gpl-30-or-later) | 1     |
+| [ISC](#isc)                          | 43    |
+| [MIT AND Zlib](#mit-and-zlib)        | 1     |
+| [MIT](#mit)                          | 599   |
+| [Public Domain](#public-domain)      | 1     |
+| [Python-2.0](#python-20)             | 1     |
 
 #### 0BSD
 
@@ -149,13 +149,13 @@ GNU General Public License v2.0 only - [https://www.gnu.org/licenses/old-license
 | ------------ | -------- | -------------------- | -------------------------------------------------------------------------------- |
 | `node-forge` | `0.10.0` | Digital Bazaar, Inc. | [https://github.com/digitalbazaar/forge](https://github.com/digitalbazaar/forge) |
 
-#### GPL-3.0
+#### GPL-3.0-or-later
 
-GNU General Public License v3.0 only - [https://www.gnu.org/licenses/gpl-3.0-standalone.html](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
+GNU General Public License v3.0 or later - [https://www.gnu.org/licenses/gpl-3.0-standalone.html](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
 
 | Name    | Version | Publisher        | Repository                                                     |
 | ------- | ------- | ---------------- | -------------------------------------------------------------- |
-| `jszip` | `3.6.0` | Stuart Knightley | [https://github.com/Stuk/jszip](https://github.com/Stuk/jszip) |
+| `jszip` | `3.7.1` | Stuart Knightley | [https://github.com/Stuk/jszip](https://github.com/Stuk/jszip) |
 
 #### ISC
 
@@ -437,7 +437,7 @@ MIT License - [https://opensource.org/licenses/MIT](https://opensource.org/licen
 | `concat-map`                                         | `0.0.1`         | James Halliday                 | [https://github.com/substack/node-concat-map](https://github.com/substack/node-concat-map)                                                                                                           |
 | `constant-case`                                      | `3.0.4`         | Blake Embrey                   | [https://github.com/blakeembrey/change-case](https://github.com/blakeembrey/change-case)                                                                                                             |
 | `convert-source-map`                                 | `1.7.0`         | Thorsten Lorenz                | [https://github.com/thlorenz/convert-source-map](https://github.com/thlorenz/convert-source-map)                                                                                                     |
-| `core-util-is`                                       | `1.0.2`         | Isaac Z. Schlueter             | [https://github.com/isaacs/core-util-is](https://github.com/isaacs/core-util-is)                                                                                                                     |
+| `core-util-is`                                       | `1.0.3`         | Isaac Z. Schlueter             | [https://github.com/isaacs/core-util-is](https://github.com/isaacs/core-util-is)                                                                                                                     |
 | `cosmiconfig-toml-loader`                            | `1.0.0`         | Daniel Rearden                 | [https://github.com/danielrearden/cosmiconfig-toml-loader](https://github.com/danielrearden/cosmiconfig-toml-loader)                                                                                 |
 | `cosmiconfig`                                        | `7.0.0`         | David Clark                    | [https://github.com/davidtheclark/cosmiconfig](https://github.com/davidtheclark/cosmiconfig)                                                                                                         |
 | `create-require`                                     | `1.1.1`         |                                | [https://github.com/nuxt-contrib/create-require](https://github.com/nuxt-contrib/create-require)                                                                                                     |
@@ -583,7 +583,7 @@ MIT License - [https://opensource.org/licenses/MIT](https://opensource.org/licen
 | `json5`                                              | `2.2.0`         | Aseem Kishore                  | [https://github.com/json5/json5](https://github.com/json5/json5)                                                                                                                                     |
 | `jsonfile`                                           | `6.1.0`         | JP Richardson                  | [https://github.com/jprichardson/node-jsonfile](https://github.com/jprichardson/node-jsonfile)                                                                                                       |
 | `jsonwebtoken`                                       | `8.5.1`         | auth0                          | [https://github.com/auth0/node-jsonwebtoken](https://github.com/auth0/node-jsonwebtoken)                                                                                                             |
-| `jszip`                                              | `3.6.0`         | Stuart Knightley               | [https://github.com/Stuk/jszip](https://github.com/Stuk/jszip)                                                                                                                                       |
+| `jszip`                                              | `3.7.1`         | Stuart Knightley               | [https://github.com/Stuk/jszip](https://github.com/Stuk/jszip)                                                                                                                                       |
 | `jwa`                                                | `1.4.1`         | Brian J. Brennan               | [https://github.com/brianloveswords/node-jwa](https://github.com/brianloveswords/node-jwa)                                                                                                           |
 | `jwa`                                                | `2.0.0`         | Brian J. Brennan               | [https://github.com/brianloveswords/node-jwa](https://github.com/brianloveswords/node-jwa)                                                                                                           |
 | `jws`                                                | `3.2.2`         | Brian J Brennan                | [https://github.com/brianloveswords/node-jws](https://github.com/brianloveswords/node-jws)                                                                                                           |
