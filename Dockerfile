@@ -1,5 +1,5 @@
 # Set up build
-FROM node:lts@sha256:36a56dc5c28c952b77db095e986e6e65af7eb9095e38b0da7495fc83800b91af AS build
+FROM node:lts@sha256:ab6c8cd32006f8a4c1c795e55ddfbc7f54f5a3fb7318506ecb355cab8f5e7182 AS build
 
 WORKDIR /usr/src
 
