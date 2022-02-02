@@ -9,7 +9,7 @@ RUN npm ci --no-optional && \
     npm run compile && \
     rm -rf node_modules .git
 
-FROM ubuntu:rolling@sha256:cfc189b67f53b322b0ceaabacfc9e2414c63435f362348807fe960d0fbce5ada
+FROM ubuntu:rolling@sha256:1108598c6469492b0ec61c4c9bab6868a3d335ecf76deb4d31ff3b2615170ae9
 
 # Fix CVE-2021-26932, CVE-2021-3520
 RUN apt-get update && apt-get install -y \
