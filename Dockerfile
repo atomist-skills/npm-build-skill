@@ -1,5 +1,5 @@
 # Set up build
-FROM node:lts@sha256:61b6cc81ecc3f94f614dca6bfdc5262d15a6618f7aabfbfc6f9f05c935ee753c AS build
+FROM node:lts@sha256:ca9d3abb9e2228bf849afad8f861e0b446fd62d9f8ba85385e18f31f20cb58b8 AS build
 
 WORKDIR /usr/src
 
@@ -9,7 +9,7 @@ RUN npm ci --no-optional && \
     npm run compile && \
     rm -rf node_modules .git
 
-FROM ubuntu:rolling@sha256:02c0317b899ca5595fa17870cedd9550962dbdb2e0b55def018727527b57e2f4
+FROM ubuntu:rolling@sha256:f4f9ed916ce66b49307c42651ad6335096e02a78bb3585888103131f9cccd663
 
 # Fix CVE-2021-26932, CVE-2021-3520
 RUN apt-get update && apt-get install -y \
