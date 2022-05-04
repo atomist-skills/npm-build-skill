@@ -39,7 +39,7 @@ export const Skill = skill<
 			image: "gcr.io/atomist-container-skills/npm-build-skill",
 			resources: {
 				limit: {
-					cpu: 4,
+					cpu: 2,
 					memory: 8000,
 				},
 			},
