@@ -145,4 +145,9 @@ export const Skill = skill<
 		},
 		repos: parameter.repoFilter(),
 	},
+
+	datalogSubscriptions: [
+		{ name: "build_on_push", query: "@atomist/skill/on_push" },
+		{ name: "build_on_tag", query: "@atomist/skill/on_tag" },
+	],
 });

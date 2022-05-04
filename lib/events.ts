@@ -24,6 +24,7 @@ import {
 	repository,
 	retry,
 	runSteps,
+	secret,
 	status,
 	Step,
 	tmpFs,
@@ -67,7 +68,9 @@ const LoadProjectStep: NpmStep = {
 			repository.gitHub({
 				owner: repo.owner,
 				repo: repo.name,
-				credential: { token: repo.installationToken, scopes: [] },
+				credential: await ctx.credential.resolve(
+					secret.gitHubAppTokenFromRepository(ctx.data.commit),
+				),
 			}),
 		);
 		params.project = project;
@@ -418,7 +421,9 @@ const NpmVersionStep: NpmStep = {
 			}
 		} else {
 			const octokit = github.api({
-				credential: { token: repo.installationToken, scopes: [] },
+				credential: await ctx.credential.resolve(
+					secret.gitHubAppTokenFromRepository(ctx.data.commit),
+				),
 			});
 
 			try {
