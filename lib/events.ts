@@ -63,13 +63,12 @@ const LoadProjectStep: NpmStep = {
 	run: async (ctx, params) => {
 		const repo = eventRepo(ctx.data);
 
-		const project: project.Project = await ctx.project.load(
+		const project: project.Project = await ctx.project.clone(
 			repository.gitHub({
 				owner: repo.owner,
 				repo: repo.name,
 				credential: { token: repo.installationToken, scopes: [] },
 			}),
-			process.cwd(),
 		);
 		params.project = project;
 
@@ -150,15 +149,15 @@ const PrepareStep: NpmStep = {
 	run: async (ctx, params) => {
 		if (ctx.configuration?.parameters?.npmrc) {
 			// copy creds
-			const npmRc = await tmpFs.createFile(ctx, {
-				path: path.join(os.homedir(), ".npmrc"),
-			});
 			try {
-				await fs.writeFile(ctx.configuration.parameters.npmrc, npmRc);
+				await tmpFs.createFile(ctx, {
+					path: path.join(os.homedir(), ".npmrc"),
+					content: ctx.configuration.parameters.npmrc,
+				});
 			} catch (e) {
 				const repo = eventRepo(ctx.data);
 				const commit = eventCommit(ctx.data);
-				const reason = `Failed to create .npmrc'`;
+				const reason = `Failed to create .npmrc`;
 				params.body.push(`${reason}:\n${e.message}`);
 				await params.check.update({
 					conclusion: "failure",
@@ -166,7 +165,7 @@ const PrepareStep: NpmStep = {
 				});
 				return status.failure(statusReason({ reason, repo, commit }));
 			}
-			params.body.push(`Created \`${npmRc}\``);
+			params.body.push(`Created \`.npmrc\``);
 		}
 		await params.check.update({
 			conclusion: undefined,
