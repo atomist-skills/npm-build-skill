@@ -106,6 +106,7 @@ export const Skill = skill<
 			type: ParameterType.Secret,
 			displayName: ".npmrc file",
 			description: "Contents of .npmrc file to be used for publishing",
+			lineStyle: LineStyle.Multiple,
 			required: false,
 		},
 		tag: {
