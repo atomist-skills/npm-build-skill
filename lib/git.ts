@@ -72,7 +72,7 @@ export function nextPrereleaseTag(args: NextPrereleaseTagArgs): string {
 	return semver.inc(sortedTags[0], "prerelease");
 }
 
-export type EventSubscription = subscription.datalog.Commit;
+export type EventSubscription = { commit: subscription.datalog.Commit };
 
 /** Extract commit from event data. */
 export function eventCommit(data: EventSubscription): {
@@ -80,7 +80,7 @@ export function eventCommit(data: EventSubscription): {
 	url?: string;
 } {
 	return {
-		sha: data.sha,
+		sha: data.commit.sha,
 	};
 }
 
@@ -94,10 +94,10 @@ export function eventRepo(data: EventSubscription): {
 } {
 	return {
 		channels: [],
-		name: data.repo.name,
-		owner: data.repo.org.name,
-		defaultBranch: data.repo.defaultBranch,
-		installationToken: data.repo.org.installationToken,
+		name: data.commit.repo.name,
+		owner: data.commit.repo.org.name,
+		defaultBranch: data.commit.repo.defaultBranch,
+		installationToken: data.commit.repo.org.installationToken,
 	};
 }
 
@@ -106,7 +106,7 @@ export function eventRepo(data: EventSubscription): {
  * tag-triggered events.
  */
 export function eventBranch(data: EventSubscription): string | undefined {
-	return data.refs?.find(r => r.type === "branch")?.name;
+	return data.commit.refs?.find(r => r.type === "branch")?.name;
 }
 
 /**

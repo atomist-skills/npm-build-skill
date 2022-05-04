@@ -26,7 +26,6 @@ import {
 	runSteps,
 	status,
 	Step,
-	subscription,
 } from "@atomist/skill";
 import * as fs from "fs-extra";
 import * as os from "os";
@@ -39,6 +38,7 @@ import {
 	eventBranch,
 	eventCommit,
 	eventRepo,
+	EventSubscription,
 	eventTag,
 	gitRefToNpmTag,
 	nextPrereleaseTag,
@@ -53,7 +53,7 @@ interface NpmParameters {
 }
 
 type NpmStep = Step<
-	EventContext<subscription.datalog.Commit, Configuration>,
+	EventContext<EventSubscription, Configuration>,
 	NpmParameters
 >;
 
@@ -642,7 +642,7 @@ const NpmPublishStep: NpmStep = {
 };
 
 export const handler: EventHandler<
-	subscription.datalog.Commit,
+	EventSubscription,
 	Configuration
 > = async ctx =>
 	runSteps({
@@ -662,7 +662,7 @@ export const handler: EventHandler<
 	});
 
 function shouldPublish(
-	ctx: EventContext<subscription.datalog.Commit, Configuration>,
+	ctx: EventContext<EventSubscription, Configuration>,
 ): boolean {
 	const repo = eventRepo(ctx.data);
 	const branch = eventBranch(ctx.data);
