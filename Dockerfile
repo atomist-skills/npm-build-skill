@@ -29,7 +29,10 @@ RUN echo 'export NVM_DIR="/opt/.nvm"' >> "$HOME/.bashrc" \
 
 # nodejs and tools
 RUN bash -c "source /opt/.nvm/nvm.sh \
+    && nvm install 12 \
+    && nvm install 14 \
     && nvm install 16 \
+    && nvm install 18 \
     && nvm use --lts \
     && nvm alias default node"
 

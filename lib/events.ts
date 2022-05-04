@@ -87,6 +87,14 @@ const ValidateStep: NpmStep = {
 				.abort();
 		}
 
+		if (
+			!ctx.configuration.parameters.subscription_filter.includes(
+				ctx.name as any,
+			)
+		) {
+			return status.success(`Ignoring subscription`).hidden().abort();
+		}
+
 		// raise the check
 		const commit = eventCommit(ctx.data);
 		params.check = await github.createCheck(ctx, params.project.id, {
@@ -439,7 +447,7 @@ const NpmVersionStep: NpmStep = {
 						});
 						if (
 							!ctx.configuration?.parameters?.subscription_filter?.includes(
-								"onTag",
+								"build_on_tag",
 							)
 						) {
 							try {
