@@ -40,7 +40,7 @@ export const Skill = skill<
 			resources: {
 				limit: {
 					cpu: 2,
-					memory: 8000,
+					memory: 4000,
 				},
 			},
 		},
