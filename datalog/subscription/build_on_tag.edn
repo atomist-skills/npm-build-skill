@@ -1,0 +1,28 @@
+[:find
+ (pull ?commit [:schema/entity-type
+                {(:git.ref/_commit :as :git.ref/refs) [:git.ref/name
+                                                       :git.ref/type]}
+                {:git.commit/repo [:git.repo/name
+                                   :git.repo/default-branch
+                                   {:git.repo/org [:github.org/installation-token
+                                                   :git.org/name
+                                                   (:git.org/provider-base-url
+                                                     :as
+                                                     :base-url)
+                                                   :git.provider/url]}]}
+                {:git.commit/author [:git.user/name
+                                     :git.user/login
+                                     {:git.user/emails [:email.email/address]}]}
+                :git.commit/sha
+                :git.commit/message])
+ (pull ?ref [:schema/entity-type
+             :git.ref/name
+             :git.ref/type])
+ :in $ $before-db % ?ctx
+ :where
+ (attributes-tx ?ctx ?ref :git.ref/commit ?commit)
+ [?ref :git.ref/type :git.ref.type/tag]
+
+ ;; check repo filter
+ [?commit :git.commit/repo ?repo]
+ (skill-repo-selected? ?ctx ?repo)]
