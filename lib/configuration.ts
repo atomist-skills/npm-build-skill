@@ -19,6 +19,7 @@ export interface Configuration {
 	scripts?: string[];
 	version?: string;
 	access?: string;
+	npmrc?: string;
 	tag?: string[];
 	command?: string;
 	docker_cache?: string[];

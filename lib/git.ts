@@ -72,19 +72,16 @@ export function nextPrereleaseTag(args: NextPrereleaseTagArgs): string {
 	return semver.inc(sortedTags[0], "prerelease");
 }
 
-export type EventSubscription =
-	| subscription.types.OnPushSubscription
-	| subscription.types.OnTagSubscription;
+export type EventSubscription = subscription.datalog.Commit;
 
 /** Extract commit from event data. */
 export function eventCommit(data: EventSubscription): {
 	sha?: string;
 	url?: string;
 } {
-	return (
-		(data as subscription.types.OnPushSubscription).Push?.[0]?.after ||
-		(data as subscription.types.OnTagSubscription).Tag?.[0]?.commit
-	);
+	return {
+		sha: data.sha,
+	};
 }
 
 /** Extract repo from event data. */
@@ -93,12 +90,15 @@ export function eventRepo(data: EventSubscription): {
 	defaultBranch?: string;
 	name?: string;
 	owner?: string;
-	org?: { provider?: { apiUrl?: string } };
+	installationToken: string;
 } {
-	return (
-		(data as subscription.types.OnPushSubscription).Push?.[0]?.repo ||
-		(data as subscription.types.OnTagSubscription).Tag?.[0]?.commit?.repo
-	);
+	return {
+		channels: [],
+		name: data.repo.name,
+		owner: data.repo.org.name,
+		defaultBranch: data.repo.defaultBranch,
+		installationToken: data.repo.org.installationToken,
+	};
 }
 
 /**
@@ -106,7 +106,7 @@ export function eventRepo(data: EventSubscription): {
  * tag-triggered events.
  */
 export function eventBranch(data: EventSubscription): string | undefined {
-	return (data as subscription.types.OnPushSubscription).Push?.[0]?.branch;
+	return data.refs?.find(r => r.type === "branch")?.name;
 }
 
 /**
@@ -114,5 +114,5 @@ export function eventBranch(data: EventSubscription): string | undefined {
  * commit-triggered events.
  */
 export function eventTag(data: EventSubscription): string | undefined {
-	return (data as subscription.types.OnTagSubscription).Tag?.[0]?.name;
+	return undefined;
 }

@@ -22,15 +22,14 @@ import {
 	log,
 	project,
 	repository,
+	retry,
 	runSteps,
-	secret,
 	status,
 	Step,
 	subscription,
 } from "@atomist/skill";
 import * as fs from "fs-extra";
 import * as os from "os";
-import * as pRetry from "p-retry";
 import * as path from "path";
 import * as semver from "semver";
 
@@ -54,11 +53,7 @@ interface NpmParameters {
 }
 
 type NpmStep = Step<
-	EventContext<
-		| subscription.types.OnPushSubscription
-		| subscription.types.OnTagSubscription,
-		Configuration
-	>,
+	EventContext<subscription.datalog.Commit, Configuration>,
 	NpmParameters
 >;
 
@@ -67,19 +62,11 @@ const LoadProjectStep: NpmStep = {
 	run: async (ctx, params) => {
 		const repo = eventRepo(ctx.data);
 
-		const credential = await ctx.credential.resolve(
-			secret.gitHubAppToken({
-				owner: repo.owner,
-				repo: repo.name,
-				apiUrl: repo.org.provider.apiUrl,
-			}),
-		);
-
 		const project: project.Project = await ctx.project.load(
 			repository.gitHub({
 				owner: repo.owner,
 				repo: repo.name,
-				credential,
+				credential: { token: repo.installationToken, scopes: [] },
 			}),
 			process.cwd(),
 		);
@@ -154,13 +141,13 @@ const PrepareStep: NpmStep = {
 	run: async (ctx, params) => {
 		// copy creds
 		const npmRc = path.join(os.homedir(), ".npmrc");
-		if (process.env.ATOMIST_NPMRC) {
+		if (ctx.configuration?.parameters?.npmrc) {
 			try {
-				await fs.copyFile(process.env.ATOMIST_NPMRC, npmRc);
+				await fs.writeFile(ctx.configuration.parameters.npmrc, npmRc);
 			} catch (e) {
 				const repo = eventRepo(ctx.data);
 				const commit = eventCommit(ctx.data);
-				const reason = `Failed to copy '${process.env.ATOMIST_NPMRC}' to '${npmRc}'`;
+				const reason = `Failed to create .npmrc'`;
 				params.body.push(`${reason}:\n${e.message}`);
 				await params.check.update({
 					conclusion: "failure",
@@ -420,20 +407,12 @@ const NpmVersionStep: NpmStep = {
 				version = `${pjVersion}-${gitRefToNpmTag(tag, "gtag")}`;
 			}
 		} else {
-			const credential = await ctx.credential.resolve(
-				secret.gitHubAppToken({
-					owner: repo.owner,
-					repo: repo.name,
-					apiUrl: repo.org.provider.apiUrl,
-				}),
-			);
 			const octokit = github.api({
-				apiUrl: repo.org?.provider?.apiUrl,
-				credential,
+				credential: { token: repo.installationToken, scopes: [] },
 			});
 
 			try {
-				version = await pRetry(
+				version = await retry(
 					async () => {
 						let tags: string[] = [];
 						try {
@@ -663,8 +642,7 @@ const NpmPublishStep: NpmStep = {
 };
 
 export const handler: EventHandler<
-	| subscription.types.OnPushSubscription
-	| subscription.types.OnTagSubscription,
+	subscription.datalog.Commit,
 	Configuration
 > = async ctx =>
 	runSteps({
@@ -684,11 +662,7 @@ export const handler: EventHandler<
 	});
 
 function shouldPublish(
-	ctx: EventContext<
-		| subscription.types.OnPushSubscription
-		| subscription.types.OnTagSubscription,
-		Configuration
-	>,
+	ctx: EventContext<subscription.datalog.Commit, Configuration>,
 ): boolean {
 	const repo = eventRepo(ctx.data);
 	const branch = eventBranch(ctx.data);

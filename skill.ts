@@ -20,7 +20,6 @@ import {
 	parameter,
 	ParameterType,
 	ParameterVisibility,
-	resourceProvider,
 	skill,
 } from "@atomist/skill";
 
@@ -34,15 +33,6 @@ export const Skill = skill<
 	categories: [Category.DevOps],
 	iconUrl:
 		"https://raw.githubusercontent.com/atomist-skills/npm-build-skill/main/docs/images/icon.svg",
-
-	resourceProviders: {
-		github: resourceProvider.gitHub({ minRequired: 1 }),
-		npmjs: resourceProvider.npmRegistry({
-			minRequired: 0,
-			maxAllowed: 1,
-			description: "npm registry to publish the package to",
-		}),
-	},
 
 	containers: {
 		npm: {
@@ -112,6 +102,12 @@ export const Skill = skill<
 			],
 			required: false,
 		},
+		npmrc: {
+			type: ParameterType.Secret,
+			displayName: ".npmrc file",
+			description: "Contents of .npmrc file to be used for publishing",
+			required: false,
+		},
 		tag: {
 			type: ParameterType.StringArray,
 			displayName: "Distribution tags",
@@ -143,8 +139,7 @@ export const Skill = skill<
 		repos: parameter.repoFilter(),
 	},
 
-	subscriptions: [
-		"@atomist/skill/github/onPush",
-		"@atomist/skill/github/onTag",
+	datalogSubscriptions: [
+		{ name: "on_push", query: "@atomist/skill/on_push" },
 	],
 });
