@@ -142,7 +142,7 @@ const PrepareStep: NpmStep = {
 	run: async (ctx, params) => {
 		if (ctx.configuration?.parameters?.npmrc) {
 			// copy creds
-			const npmRc = tmpFs.createFile(ctx, {
+			const npmRc = await tmpFs.createFile(ctx, {
 				path: path.join(os.homedir(), ".npmrc"),
 			});
 			try {

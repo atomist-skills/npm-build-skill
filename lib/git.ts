@@ -72,7 +72,7 @@ export function nextPrereleaseTag(args: NextPrereleaseTagArgs): string {
 	return semver.inc(sortedTags[0], "prerelease");
 }
 
-export type EventSubscription = { commit: subscription.datalog.Commit };
+export type EventSubscription = subscription.datalog.OnPush;
 
 /** Extract commit from event data. */
 export function eventCommit(data: EventSubscription): {
