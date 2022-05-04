@@ -26,6 +26,7 @@ import {
 	runSteps,
 	status,
 	Step,
+	tmpFs,
 } from "@atomist/skill";
 import * as fs from "fs-extra";
 import * as os from "os";
@@ -139,9 +140,11 @@ const CommandStep: NpmStep = {
 const PrepareStep: NpmStep = {
 	name: "prepare",
 	run: async (ctx, params) => {
-		// copy creds
-		const npmRc = path.join(os.homedir(), ".npmrc");
 		if (ctx.configuration?.parameters?.npmrc) {
+			// copy creds
+			const npmRc = tmpFs.createFile(ctx, {
+				path: path.join(os.homedir(), ".npmrc"),
+			});
 			try {
 				await fs.writeFile(ctx.configuration.parameters.npmrc, npmRc);
 			} catch (e) {
