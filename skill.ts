@@ -54,14 +54,14 @@ export const Skill = skill<
 			options: [
 				{
 					text: "GitHub > push",
-					value: "onPush",
+					value: "build_on_push",
 				},
 				{
 					text: "GitHub > tag",
-					value: "onTag",
+					value: "build_on_tag",
 				},
 			],
-			defaultValues: ["onPush"],
+			defaultValues: ["build_on_push"],
 			required: true,
 		},
 		scripts: {
