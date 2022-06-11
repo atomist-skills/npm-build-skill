@@ -64,11 +64,13 @@ const LoadProjectStep: NpmStep = {
 	run: async (ctx, params) => {
 		const repo = eventRepo(ctx.data);
 		const commit = eventCommit(ctx.data);
+		const branch = eventBranch(ctx.data);
 		const project: project.Project = await ctx.project.clone(
 			repository.gitHub({
 				owner: repo.owner,
 				repo: repo.name,
 				sha: commit.sha,
+				branch,
 				credential: await ctx.credential.resolve(
 					secret.gitHubAppTokenFromRepository(ctx.data.commit),
 				),
