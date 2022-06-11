@@ -75,6 +75,7 @@ const LoadProjectStep: NpmStep = {
 					secret.gitHubAppTokenFromRepository(ctx.data.commit),
 				),
 			}),
+			{ detachHead: !!commit.sha, alwaysDeep: true },
 		);
 		params.project = project;
 
