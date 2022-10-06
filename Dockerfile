@@ -1,5 +1,5 @@
 # Set up build
-FROM node:lts@sha256:5968f50bda8ea8bdc65fd4208de287bbb25ca3ba81649494b1b6cf4b9203695e AS build
+FROM node:lts@sha256:b35e76ba744a975b9a5428b6c3cde1a1cf0be53b246e1e9a4874f87034222b5a AS build
 
 WORKDIR /usr/src
 
@@ -9,7 +9,7 @@ RUN npm ci --no-optional && \
     npm run compile && \
     rm -rf node_modules .git
 
-FROM ubuntu:rolling@sha256:e00bd9ad7f936c975dd7c15c71d216f6456aabc39118df7eaa6919d7ddfdb3b0
+FROM ubuntu:rolling@sha256:35fb073f9e56eb84041b0745cb714eff0f7b225ea9e024f703cab56aaa5c7720
 
 # tools
 RUN apt-get update && apt-get install -y \
