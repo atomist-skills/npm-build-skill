@@ -9,7 +9,7 @@ RUN npm ci --no-optional && \
     npm run compile && \
     rm -rf node_modules .git
 
-FROM ubuntu:rolling@sha256:4a6ce3cbf8ca08ffec2e69ec71a0635664d2911a2d5985f9e44d2a264e756706
+FROM ubuntu:rolling@sha256:cb3a8c6cf45e9b18a430760ad7a7e4b80184acb9dac098e4f5cef4640ad91e58
 
 # tools
 RUN apt-get update && apt-get install -y \
