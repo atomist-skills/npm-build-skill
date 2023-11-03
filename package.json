@@ -51,7 +51,7 @@
   "dependencies": {
     "@atomist/skill": "^0.12.0-main.25",
     "fs-extra": "^10.1.0",
-    "p-retry": "^5.1.1",
+    "p-retry": "^5.1.2",
     "semver": "^7.3.7"
   },
   "devDependencies": {
